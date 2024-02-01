@@ -22,4 +22,4 @@ At the moment, ``LuaCMake`` has been tested to build and install different versi
 
 ## Usage
 
-Read the [wiki](/wiki) for detailed instructions of how to use ``LuaCMake`` in order to install Lua.
+Read the [wiki](https://github.com/Blequi/LuaCMake/wiki) for detailed instructions of how to use ``LuaCMake`` in order to install Lua.
