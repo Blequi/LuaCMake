@@ -4,6 +4,9 @@ on: [push]
 jobs:
   Windows-MSYS2-Lua-Install:
     runs-on: windows-latest
+    defaults:
+      run:
+        shell: cmd
     strategy:
       matrix:
         LUA_VERSION: ['5.1.5', '5.2.4', '5.3.6', '5.4.6']
@@ -27,16 +30,17 @@ jobs:
       - name: Update PATH system variable to include GCC and GNU Make installed by MSYS2
         run: set PATH=C:\msys64\${{ matrix.sys }}\bin;%PATH%
       - name: Configure the build of Lua ${{ matrix.LUA_VERSION }}
-        run: cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DDOWNLOAD_LUA_SOURCES=ON "-DLUA_VERSION=${{ matrix.LUA_VERSION }}" --install-prefix $RUNNER_TEMP/Lua-install/${{ matrix.LUA_VERSION }} -S LuaCMake -B $RUNNER_TEMP/Lua-build/${{ matrix.LUA_VERSION }}
+        run: cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DDOWNLOAD_LUA_SOURCES=ON "-DLUA_VERSION=${{ matrix.LUA_VERSION }}" --install-prefix %RUNNER_TEMP%\Lua-install\${{ matrix.LUA_VERSION }} -S LuaCMake -B %RUNNER_TEMP%\Lua-build\${{ matrix.LUA_VERSION }}
       - name: Build Lua ${{ matrix.LUA_VERSION }}
-        run: cmake --build $RUNNER_TEMP/Lua-build/${{ matrix.LUA_VERSION }} --config Release
+        run: cmake --build %RUNNER_TEMP%\Lua-build\${{ matrix.LUA_VERSION }} --config Release
       - name: Install Lua ${{ matrix.LUA_VERSION }}
-        run: cmake --install $RUNNER_TEMP/Lua-build/${{ matrix.LUA_VERSION }} --config Release
+        run: cmake --install %RUNNER_TEMP%\Lua-build\${{ matrix.LUA_VERSION }} --config Release
       - name: Test Lua ${{ matrix.LUA_VERSION }}
-        run: $RUNNER_TEMP/Lua-install/${{ matrix.LUA_VERSION }}/bin/lua -v
+        run: >-
+          %RUNNER_TEMP%\Lua-install\${{ matrix.LUA_VERSION }}\bin\lua.exe -v
       - name: Change back to temporary directory
-        run: cd $RUNNER_TEMP
+        run: cd %RUNNER_TEMP%
       - name: Delete build directory
-        run: rm -rf $RUNNER_TEMP/Lua-build
+        run: rmdir /S /Q Lua-build
       - name: Delete install directory
-        run: rm -rf $RUNNER_TEMP/Lua-install
+        run: rmdir /S /Q Lua-install
