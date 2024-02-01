@@ -13,16 +13,16 @@ jobs:
         with:
           path: LuaCMake
       - name: Configure the build of Lua ${{ matrix.LUA_VERSION }}
-        run: cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DDOWNLOAD_LUA_SOURCES=ON "-DLUA_VERSION=${{ matrix.LUA_VERSION }}" --install-prefix "$RUNNER_TEMP/Lua-install/${{ matrix.LUA_VERSION }}" -S LuaCMake -B "$RUNNER_TEMP/Lua-build/${{ matrix.LUA_VERSION }}"
+        run: cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DDOWNLOAD_LUA_SOURCES=ON "-DLUA_VERSION=${{ matrix.LUA_VERSION }}" --install-prefix $RUNNER_TEMP/Lua-install/${{ matrix.LUA_VERSION }} -S LuaCMake -B $RUNNER_TEMP/Lua-build/${{ matrix.LUA_VERSION }}
       - name: Build Lua ${{ matrix.LUA_VERSION }}
-        run: cmake --build "$RUNNER_TEMP/Lua-build/${{ matrix.LUA_VERSION }}" --config Release
+        run: cmake --build $RUNNER_TEMP/Lua-build/${{ matrix.LUA_VERSION }} --config Release
       - name: Install Lua ${{ matrix.LUA_VERSION }}
-        run: cmake --install "$RUNNER_TEMP/Lua-build/${{ matrix.LUA_VERSION }}" --config Release
+        run: cmake --install $RUNNER_TEMP/Lua-build/${{ matrix.LUA_VERSION }} --config Release
       - name: Test Lua ${{ matrix.LUA_VERSION }}
-        run: "$RUNNER_TEMP/Lua-install/${{ matrix.LUA_VERSION }}/bin/lua" -v
+        run: $RUNNER_TEMP/Lua-install/${{ matrix.LUA_VERSION }}/bin/lua -v
       - name: Change back to temporary directory
         run: cd $RUNNER_TEMP
       - name: Delete build directory
-        run: rm -rf "$RUNNER_TEMP/Lua-build"
+        run: rm -rf $RUNNER_TEMP/Lua-build
       - name: Delete install directory
-        run: rm -rf "$RUNNER_TEMP/Lua-install"
+        run: rm -rf $RUNNER_TEMP/Lua-install
