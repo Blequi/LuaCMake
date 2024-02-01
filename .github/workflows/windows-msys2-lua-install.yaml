@@ -1,0 +1,42 @@
+name: Windows MSYS2 Lua Install
+run-name: ${{ github.actor }} is testing out Lua install on Windows with MSYS2
+on: [push]
+jobs:
+  Windows-MSYS2-Lua-Install:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        LUA_VERSION: ['5.1.5', '5.2.4', '5.3.6', '5.4.6']
+        include:
+          - { sys: mingw64, env: x86_64 }
+          - { sys: mingw32, env: i686 }
+          - { sys: ucrt64, env: ucrt-x86_64 }
+    steps:
+      - name: Checkout repository to LuaCMake directory
+        uses: actions/checkout@v4
+        with:
+          path: LuaCMake
+      - name: Configure MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          update: true
+          msystem: ${{ matrix.sys }}
+          install: >-
+            mingw-w64-${{ matrix.env }}-gcc
+            mingw-w64-${{ matrix.env }}-make
+      - name: Update PATH system variable to include GCC and GNU Make installed by MSYS2
+        run: set PATH=C:\msys64\${{ matrix.sys }}\bin;%PATH%
+      - name: Configure the build of Lua ${{ matrix.LUA_VERSION }}
+        run: cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DDOWNLOAD_LUA_SOURCES=ON "-DLUA_VERSION=${{ matrix.LUA_VERSION }}" --install-prefix $RUNNER_TEMP/Lua-install/${{ matrix.LUA_VERSION }} -S LuaCMake -B $RUNNER_TEMP/Lua-build/${{ matrix.LUA_VERSION }}
+      - name: Build Lua ${{ matrix.LUA_VERSION }}
+        run: cmake --build $RUNNER_TEMP/Lua-build/${{ matrix.LUA_VERSION }} --config Release
+      - name: Install Lua ${{ matrix.LUA_VERSION }}
+        run: cmake --install $RUNNER_TEMP/Lua-build/${{ matrix.LUA_VERSION }} --config Release
+      - name: Test Lua ${{ matrix.LUA_VERSION }}
+        run: $RUNNER_TEMP/Lua-install/${{ matrix.LUA_VERSION }}/bin/lua -v
+      - name: Change back to temporary directory
+        run: cd $RUNNER_TEMP
+      - name: Delete build directory
+        run: rm -rf $RUNNER_TEMP/Lua-build
+      - name: Delete install directory
+        run: rm -rf $RUNNER_TEMP/Lua-install
