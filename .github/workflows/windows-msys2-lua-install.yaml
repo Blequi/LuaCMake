@@ -41,6 +41,6 @@ jobs:
       - name: Change back to temporary directory
         run: cd %RUNNER_TEMP%
       - name: Delete build directory
-        run: rmdir /S /Q Lua-build
+        run: rmdir /S /Q %RUNNER_TEMP%\Lua-build
       - name: Delete install directory
-        run: rmdir /S /Q Lua-install
+        run: rmdir /S /Q %RUNNER_TEMP%\Lua-install
