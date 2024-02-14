@@ -1,7 +1,9 @@
 prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=@CMAKE_INSTALL_PREFIX@
 lib_name=lua@LUA_SUFFIX@
-libdir=${prefix}/@CMAKE_INSTALL_LIBDIR@
+libdir=${exec_prefix}/@CMAKE_INSTALL_LIBDIR@
 includedir=${prefix}/@CMAKE_INSTALL_INCLUDEDIR@
+version=@LUA_R@
 
 INSTALL_LMOD=${prefix}/@CMAKE_INSTALL_DATAROOTDIR@/lua/@LUA_V@
 INSTALL_CMOD=${prefix}/@CMAKE_INSTALL_LIBDIR@/lua/@LUA_V@

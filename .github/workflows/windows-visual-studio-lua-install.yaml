@@ -1,5 +1,5 @@
 name: Windows Visual Studio Lua Install
-run-name: ${{ github.actor }} is testing out Lua install on Windows with Visual Studio
+run-name: Testing out Lua install on Windows with Visual Studio
 on: [push]
 jobs:
   Windows-Visual-Studio-Lua-Install:
