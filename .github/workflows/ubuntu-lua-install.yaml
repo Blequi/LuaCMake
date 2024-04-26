@@ -28,11 +28,13 @@ jobs:
         run: tar -xf luarocks-${{ matrix.LUAROCKS_VERSION }}.tar.gz
       - name: Configure LuaRocks
         run: ./configure --prefix=$RUNNER_TEMP/LuaRocks-install/${{ matrix.LUAROCKS_VERSION }} --with-lua=$RUNNER_TEMP/Lua-install/${{ matrix.LUA_VERSION }}
-        working-directory: $RUNNER_TEMP/luarocks-${{ matrix.LUAROCKS_VERSION }} 
+        working-directory: ./luarocks-${{ matrix.LUAROCKS_VERSION }} 
       - name: Build LuaRocks
         run: make
+        working-directory: ./luarocks-${{ matrix.LUAROCKS_VERSION }} 
       - name: Install LuaRocks
         run: make install
+        working-directory: ./luarocks-${{ matrix.LUAROCKS_VERSION }} 
       - name: Output LuaRocks path to file
         run: eval $($RUNNER_TEMP/LuaRocks-install/${{ matrix.LUAROCKS_VERSION }}/bin/luarocks path)
       - name: Install LuaFileSystem
