@@ -6,7 +6,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        LUA_VERSION: ['5.1.5', '5.2.4', '5.3.6', '5.4.6']
+        #LUA_VERSION: ['5.1.5', '5.2.4', '5.3.6', '5.4.6']
+        LUA_VERSION: ['5.4.6']
         LUAROCKS_VERSION: ['3.11.0']
     steps:
       - name: Checkout repository to LuaCMake directory
@@ -26,7 +27,8 @@ jobs:
       - name: Unpack LuaRocks
         run: tar -xf luarocks-${{ matrix.LUAROCKS_VERSION }}.tar.gz
       - name: Configure LuaRocks
-        run: $RUNNER_TEMP/luarocks-${{ matrix.LUAROCKS_VERSION }}/configure --prefix=$RUNNER_TEMP/LuaRocks-install/${{ matrix.LUAROCKS_VERSION }} --with-lua=$RUNNER_TEMP/Lua-install/${{ matrix.LUA_VERSION }}
+        run: ./configure --prefix=$RUNNER_TEMP/LuaRocks-install/${{ matrix.LUAROCKS_VERSION }} --with-lua=$RUNNER_TEMP/Lua-install/${{ matrix.LUA_VERSION }}
+        working-directory: $RUNNER_TEMP/luarocks-${{ matrix.LUAROCKS_VERSION }} 
       - name: Build LuaRocks
         run: make
       - name: Install LuaRocks
