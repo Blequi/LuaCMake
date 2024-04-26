@@ -82,8 +82,16 @@ function(process_lua_from_source_code_dir source_code_dir major_version minor_ve
     
     if (WIN32)
         target_compile_definitions(${lua_shared_lib} PRIVATE LUA_BUILD_AS_DLL)
+    elseif ("${CMAKE_SYSTEM_NAME}" IN_LIST "FreeBSD;NetBSD;OpenBSD")
+        target_compile_definitions(${lua_shared_lib} PRIVATE "LUA_USE_LINUX" "LUA_USE_READLINE")
+    elseif ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+        target_compile_definitions(${lua_shared_lib} PRIVATE "LUA_USE_LINUX")
+    elseif ("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
+        target_compile_definitions(${lua_shared_lib} PRIVATE "LUA_USE_MACOSX" "LUA_USE_READLINE")
+    elseif ("${CMAKE_SYSTEM_NAME}" STREQUAL "iOS")
+        target_compile_definitions(${lua_shared_lib} PRIVATE "LUA_USE_IOS")
     endif()
-
+    
     target_include_directories(${lua_shared_lib} PRIVATE ${LUA_SOURCE_CODE_SRC_DIR})
 
     if (HAVE_LIBM)
@@ -110,6 +118,16 @@ function(process_lua_from_source_code_dir source_code_dir major_version minor_ve
 
         add_library(${lua_static_lib} STATIC ${LUA_LIBRARY_SOURCE_FILES})
         target_compile_definitions(${lua_static_lib} PRIVATE ${LUA_COMPAT})
+
+        if ("${CMAKE_SYSTEM_NAME}" IN_LIST "FreeBSD;NetBSD;OpenBSD")
+            target_compile_definitions(${lua_static_lib} PRIVATE "LUA_USE_LINUX" "LUA_USE_READLINE")
+        elseif ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+            target_compile_definitions(${lua_static_lib} PRIVATE "LUA_USE_LINUX")
+        elseif ("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
+            target_compile_definitions(${lua_static_lib} PRIVATE "LUA_USE_MACOSX" "LUA_USE_READLINE")
+        elseif ("${CMAKE_SYSTEM_NAME}" STREQUAL "iOS")
+            target_compile_definitions(${lua_static_lib} PRIVATE "LUA_USE_IOS")
+        endif()
 
         target_include_directories(${lua_static_lib} PRIVATE ${LUA_SOURCE_CODE_SRC_DIR})
 
