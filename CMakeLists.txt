@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.22.1)
-project(LuaCMake C)
+
+project(LuaCMake
+    VERSION 1.0.1
+    LANGUAGES C
+)
 
 option(DOWNLOAD_LUA_SOURCES "Download Lua sources during the installation process." OFF)
 
