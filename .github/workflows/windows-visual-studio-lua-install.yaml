@@ -4,19 +4,19 @@ on: [push]
 jobs:
   Windows-Visual-Studio-Lua-Install:
     runs-on: windows-latest
-    # defaults:
-    #   run:
-    #     shell: cmd
+    defaults:
+      run:
+        shell: cmd
     strategy:
       matrix:
-        LUA_VERSION: ['5.1.5', '5.2.4', '5.3.6', '5.4.6']
+        # LUA_VERSION: ['5.1.5', '5.2.4', '5.3.6', '5.4.6']
+        LUA_VERSION: ['5.4.6']
         LUAROCKS_VERSION: ['3.11.0']
     steps:
       - name: Checkout repository to LuaCMake directory
         uses: actions/checkout@v4
         with:
           path: LuaCMake
-      - uses: ilammy/msvc-dev-cmd@v1
       - name: Configure the build of Lua ${{ matrix.LUA_VERSION }}
         run: cmake -DCMAKE_BUILD_TYPE=Release -DDOWNLOAD_LUA_SOURCES=ON "-DLUA_VERSION=${{ matrix.LUA_VERSION }}" --install-prefix %RUNNER_TEMP%\Lua-install\${{ matrix.LUA_VERSION }} -S LuaCMake -B %RUNNER_TEMP%\Lua-build\${{ matrix.LUA_VERSION }}
       - name: Build Lua ${{ matrix.LUA_VERSION }}
@@ -32,6 +32,16 @@ jobs:
       - name: Extract LuaRocks
         run: Expand-Archive luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64.zip
         shell: powershell
+      - name: Load MSVC Dev Command Prompt for x64
+        run: |
+          for /f "usebackq delims=" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath`) do (
+            if exist "%%i\VC\Auxiliary\Build\vcvarsall.bat" (
+              call "%%i\VC\Auxiliary\Build\vcvarsall.bat" x64
+              exit /b
+            )
+          )
+
+          exit /b 2
       - name: Configure LuaRocks
         run: luarocks config lua_dir %RUNNER_TEMP%\Lua-install\${{ matrix.LUA_VERSION }}
         working-directory: .\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64
