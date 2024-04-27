@@ -30,10 +30,10 @@ jobs:
       - name: Update PATH system variable to include C compiler and GNU Make installed by MSYS2
         run: |
           Add-Content $env:GITHUB_PATH C:\msys64\${{ matrix.MSYS2_CONFIG.sys }}\bin
-          Add-Content $env:GITHUB_ENV CC=C:\msys64\${{ matrix.MSYS2_CONFIG.sys }}\bin\gcc.exe
+          Add-Content $env:GITHUB_ENV CC=/${{ matrix.MSYS2_CONFIG.sys }}/bin/gcc.exe
         shell: powershell
       - name: Configure the build of Lua ${{ matrix.LUA_VERSION }}
-        run: cmake -G "MinGW Makefiles" "-DCMAKE_C_COMPILER=C:\msys64\${{ matrix.MSYS2_CONFIG.sys }}\bin\gcc.exe" -DCMAKE_BUILD_TYPE=Release -DDOWNLOAD_LUA_SOURCES=ON "-DLUA_VERSION=${{ matrix.LUA_VERSION }}" --install-prefix %RUNNER_TEMP%\Lua-install\${{ matrix.LUA_VERSION }} -S LuaCMake -B %RUNNER_TEMP%\Lua-build\${{ matrix.LUA_VERSION }}
+        run: cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DDOWNLOAD_LUA_SOURCES=ON "-DLUA_VERSION=${{ matrix.LUA_VERSION }}" --install-prefix %RUNNER_TEMP%\Lua-install\${{ matrix.LUA_VERSION }} -S LuaCMake -B %RUNNER_TEMP%\Lua-build\${{ matrix.LUA_VERSION }}
       - name: Build Lua ${{ matrix.LUA_VERSION }}
         run: cmake --build %RUNNER_TEMP%\Lua-build\${{ matrix.LUA_VERSION }} --config Release
       - name: Install Lua ${{ matrix.LUA_VERSION }}
