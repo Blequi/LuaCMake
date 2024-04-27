@@ -37,29 +37,22 @@ jobs:
           for /f "usebackq delims=" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath`) do (
             if exist "%%i\VC\Auxiliary\Build\vcvarsall.bat" (
               call "%%i\VC\Auxiliary\Build\vcvarsall.bat" x64
-              .\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64\luarocks config lua_dir %RUNNER_TEMP%\Lua-install\${{ matrix.LUA_VERSION }}
-              .\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64\luarocks path > %RUNNER_TEMP%\LuaRocks-activate.bat
-              type %RUNNER_TEMP%\LuaRocks-activate.bat
-              call %RUNNER_TEMP%\LuaRocks-activate.bat
-              set NEW_PATH=%RUNNER_TEMP%\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64;%RUNNER_TEMP%\Lua-install\${{ matrix.LUA_VERSION }}\bin;%PATH%
-              echo "%NEW_PATH%"
-              set PATH=%NEW_PATH%
-              luarocks install luafilesystem
-              lua -e "local lfs = require'lfs'; function attrdir (path) for file in lfs.dir(path) do if file ~= '.' and file ~= '..' then local f = path..'/'..file; print ('\t '..f); local attr = lfs.attributes (f); assert (type(attr) == 'table'); if attr.mode == 'directory' then attrdir (f); else for name, value in pairs(attr) do print (name, value); end end end end end attrdir ('.')"
               exit /b
             )
           )
 
           exit /b 2
-      # - name: Configure LuaRocks
-      #   run: luarocks config lua_dir %RUNNER_TEMP%\Lua-install\${{ matrix.LUA_VERSION }}
-      #   working-directory: .\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64
-      # - name: Write LuaRocks environment variables to file
-      #   run: luarocks path > %RUNNER_TEMP%\LuaRocks-activate.bat
-      #   working-directory: .\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64
-      # - name: Install and Test LuaFileSystem
-      #   run: |
-      #     call %RUNNER_TEMP%\LuaRocks-activate.bat
-      #     set PATH=%RUNNER_TEMP%\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64;%RUNNER_TEMP%\Lua-install\${{ matrix.LUA_VERSION }}\bin;%PATH%
-      #     luarocks install luafilesystem
-      #     lua -e "local lfs = require'lfs'; function attrdir (path) for file in lfs.dir(path) do if file ~= '.' and file ~= '..' then local f = path..'/'..file; print ('\t '..f); local attr = lfs.attributes (f); assert (type(attr) == 'table'); if attr.mode == 'directory' then attrdir (f); else for name, value in pairs(attr) do print (name, value); end end end end end attrdir ('.')"
+      - name: Configure LuaRocks
+        run: .\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64\luarocks.exe config lua_dir %RUNNER_TEMP%\Lua-install\${{ matrix.LUA_VERSION }}
+      - name: Write LuaRocks environment variables to file
+        run: |
+          .\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64\luarocks.exe path > %RUNNER_TEMP%\LuaRocks-activate.bat
+          type %RUNNER_TEMP%\LuaRocks-activate.bat
+      - name: Install and Test LuaFileSystem
+        run: |
+          call %RUNNER_TEMP%\LuaRocks-activate.bat
+          set NEW_PATH=%RUNNER_TEMP%\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64;%RUNNER_TEMP%\Lua-install\${{ matrix.LUA_VERSION }}\bin;%PATH%
+          echo "%NEW_PATH%"
+          set PATH=%NEW_PATH%
+          luarocks.exe install luafilesystem
+          lua.exe -e "local lfs = require'lfs'; function attrdir (path) for file in lfs.dir(path) do if file ~= '.' and file ~= '..' then local f = path..'/'..file; print ('\t '..f); local attr = lfs.attributes (f); assert (type(attr) == 'table'); if attr.mode == 'directory' then attrdir (f); else for name, value in pairs(attr) do print (name, value); end end end end end attrdir ('.')"
