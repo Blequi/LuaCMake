@@ -18,6 +18,7 @@ At the moment, ``LuaCMake`` has been tested to build and install different versi
 |---         |---               |---                                                           |
 |Toolchain    | Visual Studio 2022 C/C++ x86/x64 build tools ![VS workflow](https://github.com/Blequi/LuaCMake/actions/workflows/windows-visual-studio-lua-install.yaml/badge.svg?branch=main) | GCC 11.4.0 + GNU Make 4.3 from Ubuntu ![Ubuntu workflow](https://github.com/Blequi/LuaCMake/actions/workflows/ubuntu-lua-install.yaml/badge.svg?branch=main)           |
 |            | GCC 13.2.0 + GNU Make 4.4.1 from [MSYS2](https://www.msys2.org) ![MSYS2 workflow](https://github.com/Blequi/LuaCMake/actions/workflows/windows-msys2-lua-install.yaml/badge.svg?branch=main)                           |      |
+|            | Clang 18.1.4 + GNU Make 4.4.1 from [MSYS2](https://www.msys2.org)  ![MSYS2 workflow](https://github.com/Blequi/LuaCMake/actions/workflows/windows-msys2-lua-install.yaml/badge.svg?branch=main)        |      |
 |            | GCC 6.3.0 + GNU Make 3.82.90 from [MinGW](https://sourceforge.net/projects/mingw)         |      |
 
 ## Usage
