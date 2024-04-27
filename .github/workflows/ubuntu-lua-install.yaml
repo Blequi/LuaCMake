@@ -6,8 +6,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        #LUA_VERSION: ['5.1.5', '5.2.4', '5.3.6', '5.4.6']
-        LUA_VERSION: ['5.4.6']
+        LUA_VERSION: ['5.1.5', '5.2.4', '5.3.6', '5.4.6']
         LUAROCKS_VERSION: ['3.11.0']
     steps:
       - name: Checkout repository to LuaCMake directory
