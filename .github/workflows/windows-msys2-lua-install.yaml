@@ -19,20 +19,25 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: LuaCMake
-      - name: Configure MSYS2
-        uses: msys2/setup-msys2@v2
-        with:
-          update: true
-          msystem: ${{ matrix.MSYS2_CONFIG.sys }}
-          install: >-
-            mingw-w64-${{ matrix.MSYS2_CONFIG.env }}-cc
+      # - name: Configure MSYS2
+      #   uses: msys2/setup-msys2@v2
+      #   with:
+      #     update: true
+      #     msystem: ${{ matrix.MSYS2_CONFIG.sys }}
+      #     install: >-
+      #       mingw-w64-${{ matrix.MSYS2_CONFIG.env }}-cc
+      - name: Update MSYS2 and Install C compiler + GNU Make
+        run: |
+          C:\msys64\usr\bin\bash.exe -lc "pacman -Syuu --noconfirm --overwrite *"
+          C:\msys64\usr\bin\bash.exe -lc "pacman -Syuu --noconfirm --overwrite *"
+      - name: Install C compiler + GNU Make
+        run: C:\msys64\usr\bin\bash.exe -lc "pacman -S mingw-w64-${{ matrix.MSYS2_CONFIG.env }}-cc mingw-w64-${{ matrix.MSYS2_CONFIG.env }}-make --noconfirm --overwrite *"
       - name: Update PATH system variable to include C compiler and GNU Make installed by MSYS2
         run: |
           Add-Content $env:GITHUB_PATH C:\msys64\${{ matrix.MSYS2_CONFIG.sys }}\bin
         shell: powershell
-      - uses: seanmiddleditch/gha-setup-ninja@master
       - name: Configure the build of Lua ${{ matrix.LUA_VERSION }}
-        run: cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DDOWNLOAD_LUA_SOURCES=ON "-DLUA_VERSION=${{ matrix.LUA_VERSION }}" --install-prefix %RUNNER_TEMP%\Lua-install\${{ matrix.LUA_VERSION }} -S LuaCMake -B %RUNNER_TEMP%\Lua-build\${{ matrix.LUA_VERSION }}
+        run: cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DDOWNLOAD_LUA_SOURCES=ON "-DLUA_VERSION=${{ matrix.LUA_VERSION }}" --install-prefix %RUNNER_TEMP%\Lua-install\${{ matrix.LUA_VERSION }} -S LuaCMake -B %RUNNER_TEMP%\Lua-build\${{ matrix.LUA_VERSION }}
       - name: Build Lua ${{ matrix.LUA_VERSION }}
         run: cmake --build %RUNNER_TEMP%\Lua-build\${{ matrix.LUA_VERSION }} --config Release
       - name: Install Lua ${{ matrix.LUA_VERSION }}
