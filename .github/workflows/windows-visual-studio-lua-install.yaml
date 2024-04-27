@@ -30,8 +30,15 @@ jobs:
         run: Invoke-WebRequest -Uri https://luarocks.org/releases/luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64.zip -OutFile luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64.zip
         shell: powershell
       - name: Extract LuaRocks
-        run: Expand-Archive luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64.zip
-        shell: powershell
+        run: powershell -Command "Expand-Archive luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64.zip -DestinationPath %RUNNER_TEMP%"
+      - name: Place Lua on system environment variable PATH
+        run: |
+          echo "PATH: %PATH%"
+          set PATH=%RUNNER_TEMP%\Lua-install\${{ matrix.LUA_VERSION }}\bin;%PATH%
+      - name: Place LuaRocks on system environment variable PATH
+        run: |
+          echo "PATH: %PATH%"
+          set PATH=%RUNNER_TEMP%\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64;%PATH%
       - name: Load MSVC Dev Command Prompt for x64, configure LuaRocks, install and test LuaFileSystem
         run: |
           for /f "usebackq delims=" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath`) do (
@@ -43,16 +50,17 @@ jobs:
 
           exit /b 2
       - name: Configure LuaRocks
-        run: .\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64\luarocks.exe config lua_dir %RUNNER_TEMP%\Lua-install\${{ matrix.LUA_VERSION }}
+        run: |
+          echo "PATH: %PATH%"
+          luarocks.exe config lua_dir %RUNNER_TEMP%\Lua-install\${{ matrix.LUA_VERSION }}
       - name: Write LuaRocks environment variables to file
         run: |
-          .\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64\luarocks.exe path > %RUNNER_TEMP%\LuaRocks-activate.bat
+          luarocks.exe path > %RUNNER_TEMP%\LuaRocks-activate.bat
           type %RUNNER_TEMP%\LuaRocks-activate.bat
       - name: Install and Test LuaFileSystem
         run: |
+          echo "PATH: %PATH%"
           call %RUNNER_TEMP%\LuaRocks-activate.bat
-          set NEW_PATH=%RUNNER_TEMP%\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64;%RUNNER_TEMP%\Lua-install\${{ matrix.LUA_VERSION }}\bin;%PATH%
-          echo "%NEW_PATH%"
-          set PATH=%NEW_PATH%
-          luarocks.exe install luafilesystem
-          lua.exe -e "local lfs = require'lfs'; function attrdir (path) for file in lfs.dir(path) do if file ~= '.' and file ~= '..' then local f = path..'/'..file; print ('\t '..f); local attr = lfs.attributes (f); assert (type(attr) == 'table'); if attr.mode == 'directory' then attrdir (f); else for name, value in pairs(attr) do print (name, value); end end end end end attrdir ('.')"
+          echo "PATH: %PATH%"
+          luarocks install luafilesystem
+          lua -e "local lfs = require'lfs'; function attrdir (path) for file in lfs.dir(path) do if file ~= '.' and file ~= '..' then local f = path..'/'..file; print ('\t '..f); local attr = lfs.attributes (f); assert (type(attr) == 'table'); if attr.mode == 'directory' then attrdir (f); else for name, value in pairs(attr) do print (name, value); end end end end end attrdir ('.')"
