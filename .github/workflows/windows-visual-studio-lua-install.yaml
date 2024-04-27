@@ -9,8 +9,7 @@ jobs:
         shell: cmd
     strategy:
       matrix:
-        # LUA_VERSION: ['5.1.5', '5.2.4', '5.3.6', '5.4.6']
-        LUA_VERSION: ['5.4.6']
+        LUA_VERSION: ['5.1.5', '5.2.4', '5.3.6', '5.4.6']
         LUAROCKS_VERSION: ['3.11.0']
     steps:
       - name: Checkout repository to LuaCMake directory
@@ -33,20 +32,14 @@ jobs:
         run: Expand-Archive luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64.zip -DestinationPath $env:RUNNER_TEMP
         shell: powershell
       - name: Place Lua on system environment variable PATH
-        # run: echo PATH=%RUNNER_TEMP%\Lua-install\${{ matrix.LUA_VERSION }}\bin;%PATH% >> %GITHUB_PATH%
         run: Add-Content $env:GITHUB_PATH $env:RUNNER_TEMP\Lua-install\${{ matrix.LUA_VERSION }}\bin
         shell: powershell
       - name: Place LuaRocks on system environment variable PATH
-        # run: echo PATH=%RUNNER_TEMP%\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64;%PATH% >> %GITHUB_PATH%
         run: Add-Content $env:GITHUB_PATH $env:RUNNER_TEMP\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64
         shell: powershell
       - uses: ilammy/msvc-dev-cmd@v1
       - name: Configure LuaRocks
-        run: |
-          echo "PATH: %PATH%"
-          luarocks config lua_dir %RUNNER_TEMP%\Lua-install\${{ matrix.LUA_VERSION }}
-      # - name: Write LuaRocks environment variables to file
-      #   run: luarocks.exe path > %RUNNER_TEMP%\LuaRocks-activate.bat
+        run: luarocks config lua_dir %RUNNER_TEMP%\Lua-install\${{ matrix.LUA_VERSION }}
       - name: Assigns environment values from luarocks.exe path
         run: |
           $luarocks_path = luarocks.exe path
@@ -56,29 +49,3 @@ jobs:
         run: luarocks install luafilesystem
       - name: Test LuaFileSystem
         run: lua -e "local lfs = require'lfs'; function attrdir (path) for file in lfs.dir(path) do if file ~= '.' and file ~= '..' then local f = path..'/'..file; print ('\t '..f); local attr = lfs.attributes (f); assert (type(attr) == 'table'); if attr.mode == 'directory' then attrdir (f); else for name, value in pairs(attr) do print (name, value); end end end end end attrdir ('.')"
-      # - name: Load MSVC Dev Command Prompt for x64, configure LuaRocks, install and test LuaFileSystem
-      #   run: |
-      #     for /f "usebackq delims=" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath`) do (
-      #       if exist "%%i\VC\Auxiliary\Build\vcvarsall.bat" (
-      #         call "%%i\VC\Auxiliary\Build\vcvarsall.bat" x64
-      #         powershell -Command "foreach-object { $name, $value = $_ -split '=', 2; Add-Content $env:GITHUB_PATH '$name=$value' }"
-      #         exit /b
-      #       )
-      #     )
-
-      #     exit /b 2
-      # - name: Configure LuaRocks
-      #   run: |
-      #     echo "PATH: %PATH%"
-      #     luarocks.exe config lua_dir %RUNNER_TEMP%\Lua-install\${{ matrix.LUA_VERSION }}
-      # - name: Write LuaRocks environment variables to file
-      #   run: |
-      #     luarocks.exe path > %RUNNER_TEMP%\LuaRocks-activate.bat
-      #     type %RUNNER_TEMP%\LuaRocks-activate.bat
-      # - name: Install and Test LuaFileSystem
-      #   run: |
-      #     echo "PATH: %PATH%"
-      #     call %RUNNER_TEMP%\LuaRocks-activate.bat
-      #     echo "PATH: %PATH%"
-      #     luarocks install luafilesystem
-      #     lua -e "local lfs = require'lfs'; function attrdir (path) for file in lfs.dir(path) do if file ~= '.' and file ~= '..' then local f = path..'/'..file; print ('\t '..f); local attr = lfs.attributes (f); assert (type(attr) == 'table'); if attr.mode == 'directory' then attrdir (f); else for name, value in pairs(attr) do print (name, value); end end end end end attrdir ('.')"
