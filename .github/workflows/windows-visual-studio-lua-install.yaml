@@ -4,9 +4,9 @@ on: [push]
 jobs:
   Windows-Visual-Studio-Lua-Install:
     runs-on: windows-latest
-    defaults:
-      run:
-        shell: cmd
+    # defaults:
+    #   run:
+    #     shell: cmd
     strategy:
       matrix:
         LUA_VERSION: ['5.1.5', '5.2.4', '5.3.6', '5.4.6']
@@ -16,6 +16,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: LuaCMake
+      - uses: ilammy/msvc-dev-cmd@1
       - name: Configure the build of Lua ${{ matrix.LUA_VERSION }}
         run: cmake -DCMAKE_BUILD_TYPE=Release -DDOWNLOAD_LUA_SOURCES=ON "-DLUA_VERSION=${{ matrix.LUA_VERSION }}" --install-prefix %RUNNER_TEMP%\Lua-install\${{ matrix.LUA_VERSION }} -S LuaCMake -B %RUNNER_TEMP%\Lua-build\${{ matrix.LUA_VERSION }}
       - name: Build Lua ${{ matrix.LUA_VERSION }}
@@ -34,13 +35,12 @@ jobs:
       - name: Configure LuaRocks
         run: luarocks config lua_dir %RUNNER_TEMP%\Lua-install\${{ matrix.LUA_VERSION }}
         working-directory: .\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64
-      - name: Install LuaFileSystem
-        run: luarocks install luafilesystem
-        working-directory: .\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64
       - name: Write LuaRocks environment variables to file
         run: luarocks path > %RUNNER_TEMP%\LuaRocks-activate.bat
         working-directory: .\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64
-      - name: Test LuaFileSystem
+      - name: Install and Test LuaFileSystem
         run: |
           call %RUNNER_TEMP%\LuaRocks-activate.bat
-          %RUNNER_TEMP%\Lua-install\${{ matrix.LUA_VERSION }}\bin\lua.exe -e "local lfs = require'lfs'; function attrdir (path) for file in lfs.dir(path) do if file ~= '.' and file ~= '..' then local f = path..'/'..file; print ('\t '..f); local attr = lfs.attributes (f); assert (type(attr) == 'table'); if attr.mode == 'directory' then attrdir (f); else for name, value in pairs(attr) do print (name, value); end end end end end attrdir ('.')"
+          set PATH=%RUNNER_TEMP%\Lua-install\${{ matrix.LUA_VERSION }}\bin;%PATH%
+          luarocks install luafilesystem
+          lua -e "local lfs = require'lfs'; function attrdir (path) for file in lfs.dir(path) do if file ~= '.' and file ~= '..' then local f = path..'/'..file; print ('\t '..f); local attr = lfs.attributes (f); assert (type(attr) == 'table'); if attr.mode == 'directory' then attrdir (f); else for name, value in pairs(attr) do print (name, value); end end end end end attrdir ('.')"
