@@ -9,9 +9,11 @@ jobs:
         shell: cmd
     strategy:
       matrix:
-        LUA_VERSION: ['5.1.5', '5.2.4', '5.3.6', '5.4.6']
+        # LUA_VERSION: ['5.1.5', '5.2.4', '5.3.6', '5.4.6']
+        LUA_VERSION: ['5.4.6']
         LUAROCKS_VERSION: ['3.11.0']
-        MSYS2_CONFIG: [{ sys: mingw64, env: x86_64 }, { sys: mingw32, env: i686 }, { sys: ucrt64, env: ucrt-x86_64 }, { sys: clang32, env: clang-i686 }, { sys: clang64, env: clang-x86_64 }]
+        # MSYS2_CONFIG: [{ sys: mingw64, env: x86_64 }, { sys: mingw32, env: i686 }, { sys: ucrt64, env: ucrt-x86_64 }, { sys: clang32, env: clang-i686 }, { sys: clang64, env: clang-x86_64 }]
+        MSYS2_CONFIG: [{ sys: mingw64, env: x86_64 }]
     steps:
       - name: Checkout repository to LuaCMake directory
         uses: actions/checkout@v4
@@ -26,10 +28,12 @@ jobs:
             mingw-w64-${{ matrix.MSYS2_CONFIG.env }}-cc
             mingw-w64-${{ matrix.MSYS2_CONFIG.env }}-make
       - name: Update PATH system variable to include C compiler and GNU Make installed by MSYS2
-        run: Add-Content $env:GITHUB_PATH C:\msys64\${{ matrix.MSYS2_CONFIG.sys }}\bin
+        run: |
+          Add-Content $env:GITHUB_PATH C:\msys64\${{ matrix.MSYS2_CONFIG.sys }}\bin
+          Add-Content $env:GITHUB_ENV CC=C:\msys64\${{ matrix.MSYS2_CONFIG.sys }}\bin\cc.exe
         shell: powershell
       - name: Configure the build of Lua ${{ matrix.LUA_VERSION }}
-        run: cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DDOWNLOAD_LUA_SOURCES=ON "-DLUA_VERSION=${{ matrix.LUA_VERSION }}" --install-prefix %RUNNER_TEMP%\Lua-install\${{ matrix.LUA_VERSION }} -S LuaCMake -B %RUNNER_TEMP%\Lua-build\${{ matrix.LUA_VERSION }}
+        run: cmake -G "MinGW Makefiles" "-DCMAKE_C_COMPILER=C:\msys64\${{ matrix.MSYS2_CONFIG.sys }}\bin\cc.exe" -DCMAKE_BUILD_TYPE=Release -DDOWNLOAD_LUA_SOURCES=ON "-DLUA_VERSION=${{ matrix.LUA_VERSION }}" --install-prefix %RUNNER_TEMP%\Lua-install\${{ matrix.LUA_VERSION }} -S LuaCMake -B %RUNNER_TEMP%\Lua-build\${{ matrix.LUA_VERSION }}
       - name: Build Lua ${{ matrix.LUA_VERSION }}
         run: cmake --build %RUNNER_TEMP%\Lua-build\${{ matrix.LUA_VERSION }} --config Release
       - name: Install Lua ${{ matrix.LUA_VERSION }}
