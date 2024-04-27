@@ -35,9 +35,9 @@ jobs:
       - name: Install LuaRocks
         run: make install
         working-directory: ./luarocks-${{ matrix.LUAROCKS_VERSION }} 
-      - name: Output LuaRocks path to file
-        run: eval $($RUNNER_TEMP/LuaRocks-install/${{ matrix.LUAROCKS_VERSION }}/bin/luarocks path)
       - name: Install LuaFileSystem
-        run: luarocks install luafilesystem
+        run: $RUNNER_TEMP/LuaRocks-install/${{ matrix.LUAROCKS_VERSION }}/bin/luarocks install luafilesystem
       - name: Test LuaFileSystem
-        run: $RUNNER_TEMP/Lua-install/${{ matrix.LUA_VERSION }}/bin/lua -e "local lfs = require'lfs'; function attrdir (path) for file in lfs.dir(path) do if file ~= '.' and file ~= '..' then local f = path..'/'..file; print ('\t '..f); local attr = lfs.attributes (f); assert (type(attr) == 'table'); if attr.mode == 'directory' then attrdir (f); else for name, value in pairs(attr) do print (name, value); end end end end end attrdir ('.')"
+        run: >-
+          eval $($RUNNER_TEMP/LuaRocks-install/${{ matrix.LUAROCKS_VERSION }}/bin/luarocks path)
+          lua -e "local lfs = require'lfs'; function attrdir (path) for file in lfs.dir(path) do if file ~= '.' and file ~= '..' then local f = path..'/'..file; print ('\t '..f); local attr = lfs.attributes (f); assert (type(attr) == 'table'); if attr.mode == 'directory' then attrdir (f); else for name, value in pairs(attr) do print (name, value); end end end end end attrdir ('.')"
