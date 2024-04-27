@@ -30,7 +30,8 @@ jobs:
         run: Invoke-WebRequest -Uri https://luarocks.org/releases/luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64.zip -OutFile luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64.zip
         shell: powershell
       - name: Extract LuaRocks
-        run: powershell -Command "Expand-Archive luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64.zip -DestinationPath %RUNNER_TEMP%"
+        run: Expand-Archive luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64.zip -DestinationPath $env:RUNNER_TEMP
+        shell: powershell
       - name: Place Lua on system environment variable PATH
         # run: echo PATH=%RUNNER_TEMP%\Lua-install\${{ matrix.LUA_VERSION }}\bin;%PATH% >> %GITHUB_PATH%
         run: Add-Content $env:GITHUB_PATH $env:RUNNER_TEMP\Lua-install\${{ matrix.LUA_VERSION }}\bin
