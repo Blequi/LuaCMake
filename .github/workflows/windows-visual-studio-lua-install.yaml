@@ -50,7 +50,7 @@ jobs:
       - name: Assigns environment values from luarocks.exe path
         run: |
           $luarocks_path = luarocks.exe path
-          Add-Content $env:GITHUB_PATH $luarocks_path.Replace("""", "").Replace("'", "").Replace("SET ", "")
+          Add-Content $env:GITHUB_ENV $luarocks_path.Replace("""", "").Replace("'", "").Replace("SET ", "")
         shell: powershell
       - name: Install LuaFileSystem
         run: luarocks install luafilesystem
