@@ -47,6 +47,11 @@ jobs:
             $LUA_SHORT_VERSION=$Matches.1 + "." + $Matches.2
             luarocks config lua_version $LUA_SHORT_VERSION
           }
+          else
+          {
+            Write-Host "Invalid Lua version: ${{ matrix.LUA_VERSION }}";
+            exit 1;
+          }
         shell: powershell
       - name: Assigns environment values from luarocks.exe path
         run: |
