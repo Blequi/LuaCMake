@@ -52,6 +52,7 @@ function(process_lua_from_source_code_dir source_code_dir major_version minor_ve
     set(LUA_V "${major_version}.${minor_version}")
     set(LUA_R ${LUA_V}.${release_version})
     set(LUA_SUFFIX "${major_version}${minor_version}")
+    set(LUA_LIBRARY_NAME "lua${LUA_SUFFIX}")
 
     message(STATUS "Building Lua version: ${LUA_R}")
 
@@ -75,7 +76,7 @@ function(process_lua_from_source_code_dir source_code_dir major_version minor_ve
 
     # Building Lua shared library (luaXY.dll on Windows and libluaXY.so on Unix)
 
-    set(lua_shared_lib "lua${LUA_SUFFIX}")
+    set(lua_shared_lib "lua${LUA_SUFFIX}_shared")
 
     add_library(${lua_shared_lib} SHARED ${LUA_LIBRARY_SOURCE_FILES})
     target_compile_definitions(${lua_shared_lib} PRIVATE ${LUA_COMPAT})
@@ -109,6 +110,7 @@ function(process_lua_from_source_code_dir source_code_dir major_version minor_ve
     set_target_properties(${lua_shared_lib}
         PROPERTIES
         POSITION_INDEPENDENT_CODE ON
+        OUTPUT_NAME ${LUA_LIBRARY_NAME}
     )
 
     # On Unix: Building Lua static library (luaXY.a)
@@ -145,7 +147,7 @@ function(process_lua_from_source_code_dir source_code_dir major_version minor_ve
 
         set_target_properties(${lua_static_lib}
             PROPERTIES
-            OUTPUT_NAME "lua${LUA_SUFFIX}"
+            OUTPUT_NAME ${LUA_LIBRARY_NAME}
         )
     endif()
 
@@ -272,6 +274,8 @@ function(process_lua_from_source_code_dir source_code_dir major_version minor_ve
             
             # Install luaXY.pc
             install(FILES ${pkg_config_file} DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+
+            break()
         endif()
     endforeach()
 endfunction()
