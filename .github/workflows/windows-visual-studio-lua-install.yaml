@@ -10,6 +10,7 @@ jobs:
     strategy:
       matrix:
         LUA_VERSION: ['5.1.5', '5.2.4', '5.3.6', '5.4.6']
+        LUAROCKS_VERSION: ['3.11.0']
     steps:
       - name: Checkout repository to LuaCMake directory
         uses: actions/checkout@v4
@@ -24,9 +25,22 @@ jobs:
       - name: Test Lua ${{ matrix.LUA_VERSION }}
         run: >-
           %RUNNER_TEMP%\Lua-install\${{ matrix.LUA_VERSION }}\bin\lua.exe -v
-      - name: Change back to temporary directory
-        run: cd %RUNNER_TEMP%
-      - name: Delete build directory
-        run: rmdir /S /Q %RUNNER_TEMP%\Lua-build
-      - name: Delete install directory
-        run: rmdir /S /Q %RUNNER_TEMP%\Lua-install
+      - name: Download LuaRocks
+        run: Invoke-WebRequest -Uri https://luarocks.org/releases/luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64.zip -OutFile luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64.zip
+        shell: powershell
+      - name: Extract LuaRocks
+        run: Expand-Archive luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64.zip
+        shell: powershell
+      - name: Configure LuaRocks
+        run: luarocks config lua_dir %RUNNER_TEMP%\Lua-install\${{ matrix.LUA_VERSION }}
+        working-directory: .\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64
+      - name: Install LuaFileSystem
+        run: luarocks install luafilesystem
+        working-directory: .\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64
+      - name: Write LuaRocks environment variables to file
+        run: luarocks path > %RUNNER_TEMP%\LuaRocks-activate.bat
+        working-directory: .\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64
+      - name: Test LuaFileSystem
+        run: |
+          call %RUNNER_TEMP%\LuaRocks-activate.bat
+          %RUNNER_TEMP%\Lua-install\${{ matrix.LUA_VERSION }}\bin\lua.exe -e "local lfs = require'lfs'; function attrdir (path) for file in lfs.dir(path) do if file ~= '.' and file ~= '..' then local f = path..'/'..file; print ('\t '..f); local attr = lfs.attributes (f); assert (type(attr) == 'table'); if attr.mode == 'directory' then attrdir (f); else for name, value in pairs(attr) do print (name, value); end end end end end attrdir ('.')"
