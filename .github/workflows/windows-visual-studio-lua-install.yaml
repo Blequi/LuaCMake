@@ -32,9 +32,13 @@ jobs:
       - name: Extract LuaRocks
         run: powershell -Command "Expand-Archive luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64.zip -DestinationPath %RUNNER_TEMP%"
       - name: Place Lua on system environment variable PATH
-        run: echo PATH=%RUNNER_TEMP%\Lua-install\${{ matrix.LUA_VERSION }}\bin;%PATH% >> %GITHUB_PATH%
+        # run: echo PATH=%RUNNER_TEMP%\Lua-install\${{ matrix.LUA_VERSION }}\bin;%PATH% >> %GITHUB_PATH%
+        run: Add-Content $env:GITHUB_PATH $env:RUNNER_TEMP\Lua-install\${{ matrix.LUA_VERSION }}\bin
+        shell: powershell
       - name: Place LuaRocks on system environment variable PATH
-        run: echo PATH=%RUNNER_TEMP%\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64;%PATH% >> %GITHUB_PATH%
+        # run: echo PATH=%RUNNER_TEMP%\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64;%PATH% >> %GITHUB_PATH%
+        run: Add-Content $env:GITHUB_PATH $env:RUNNER_TEMP\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64
+        shell: powershell
       - uses: ilammy/msvc-dev-cmd@v1
       - name: Configure LuaRocks
         run: |
