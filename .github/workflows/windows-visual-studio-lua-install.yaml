@@ -1,0 +1,64 @@
+name: Windows Visual Studio Lua Install
+run-name: Testing out Lua install on Windows with Visual Studio
+on: [push]
+jobs:
+  Windows-Visual-Studio-Lua-Install:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: cmd
+    strategy:
+      matrix:
+        LUA_VERSION: ['5.1.5', '5.2.4', '5.3.6', '5.4.6']
+        LUAROCKS_VERSION: ['3.11.0']
+    steps:
+      - name: Checkout repository to LuaCMake directory
+        uses: actions/checkout@v4
+        with:
+          path: LuaCMake
+      - name: Configure the build of Lua ${{ matrix.LUA_VERSION }}
+        run: cmake -DCMAKE_BUILD_TYPE=Release -DDOWNLOAD_LUA_SOURCES=ON "-DLUA_VERSION=${{ matrix.LUA_VERSION }}" --install-prefix %RUNNER_TEMP%\Lua-install\${{ matrix.LUA_VERSION }} -S LuaCMake -B %RUNNER_TEMP%\Lua-build\${{ matrix.LUA_VERSION }}
+      - name: Build Lua ${{ matrix.LUA_VERSION }}
+        run: cmake --build %RUNNER_TEMP%\Lua-build\${{ matrix.LUA_VERSION }} --config Release
+      - name: Install Lua ${{ matrix.LUA_VERSION }}
+        run: cmake --install %RUNNER_TEMP%\Lua-build\${{ matrix.LUA_VERSION }} --config Release
+      - name: Test Lua ${{ matrix.LUA_VERSION }}
+        run: >-
+          %RUNNER_TEMP%\Lua-install\${{ matrix.LUA_VERSION }}\bin\lua.exe -v
+      - name: Download LuaRocks
+        run: Invoke-WebRequest -Uri https://luarocks.org/releases/luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64.zip -OutFile luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64.zip
+        shell: powershell
+      - name: Extract LuaRocks
+        run: Expand-Archive luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64.zip -DestinationPath $env:RUNNER_TEMP
+        shell: powershell
+      - name: Place Lua on system environment variable PATH
+        run: Add-Content $env:GITHUB_PATH $env:RUNNER_TEMP\Lua-install\${{ matrix.LUA_VERSION }}\bin
+        shell: powershell
+      - name: Place LuaRocks on system environment variable PATH
+        run: Add-Content $env:GITHUB_PATH $env:RUNNER_TEMP\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64
+        shell: powershell
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Configure LuaRocks for the built Lua interpreter
+        run: luarocks config lua_dir %RUNNER_TEMP%\Lua-install\${{ matrix.LUA_VERSION }}
+      - name: Configure LuaRocks for the built Lua version
+        run: |
+          if ("${{ matrix.LUA_VERSION }}" -match "^(\d+)\.(\d+)(\.\d+)*$")
+          {
+            $LUA_SHORT_VERSION=$Matches.1 + "." + $Matches.2
+            luarocks config lua_version $LUA_SHORT_VERSION
+          }
+          else
+          {
+            Write-Host "Invalid Lua version: ${{ matrix.LUA_VERSION }}";
+            exit 1;
+          }
+        shell: powershell
+      - name: Assigns environment values from luarocks.exe path
+        run: |
+          $luarocks_path = luarocks.exe path
+          Add-Content $env:GITHUB_ENV $luarocks_path.Replace("""", "").Replace("'", "").Replace("SET ", "")
+        shell: powershell
+      - name: Install LuaFileSystem
+        run: luarocks install luafilesystem
+      - name: Test LuaFileSystem
+        run: lua -e "local lfs = require'lfs'; function attrdir (path) for file in lfs.dir(path) do if file ~= '.' and file ~= '..' then local f = path..'/'..file; print ('\t '..f); local attr = lfs.attributes (f); assert (type(attr) == 'table'); if attr.mode == 'directory' then attrdir (f); else for name, value in pairs(attr) do print (name, value); end end end end end attrdir ('.')"
