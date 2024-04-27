@@ -49,7 +49,6 @@ jobs:
       - name: Place LuaRocks on system environment variable PATH
         run: Add-Content $env:GITHUB_PATH $env:RUNNER_TEMP\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64
         shell: powershell
-      - uses: ilammy/msvc-dev-cmd@v1
       - name: Configure LuaRocks for the built Lua interpreter
         run: luarocks config lua_dir %RUNNER_TEMP%\Lua-install\${{ matrix.LUA_VERSION }}
       - name: Configure LuaRocks for the built Lua version
