@@ -38,8 +38,16 @@ jobs:
         run: Add-Content $env:GITHUB_PATH $env:RUNNER_TEMP\luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64
         shell: powershell
       - uses: ilammy/msvc-dev-cmd@v1
-      - name: Configure LuaRocks
+      - name: Configure LuaRocks for the built Lua interpreter
         run: luarocks config lua_dir %RUNNER_TEMP%\Lua-install\${{ matrix.LUA_VERSION }}
+      - name: Configure LuaRocks for the built Lua version
+        run: |
+          if ("${{ matrix.LUA_VERSION }}" -match "^(\d+)\.(\d+)(\.\d+)*$")
+          {
+            $LUA_SHORT_VERSION=$Matches.1 + "." + $Matches.2
+            luarocks config lua_version $LUA_SHORT_VERSION
+          }
+        shell: powershell
       - name: Assigns environment values from luarocks.exe path
         run: |
           $luarocks_path = luarocks.exe path
