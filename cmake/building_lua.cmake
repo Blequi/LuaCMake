@@ -107,11 +107,20 @@ function(process_lua_from_source_code_dir source_code_dir major_version minor_ve
         target_link_libraries(${lua_shared_lib} PRIVATE dl)
     endif()
 
-    set_target_properties(${lua_shared_lib}
-        PROPERTIES
-        POSITION_INDEPENDENT_CODE ON
-        OUTPUT_NAME ${LUA_LIBRARY_NAME}
-    )
+    if (WIN32 AND NOT CYGWIN)
+        set_target_properties(${lua_shared_lib}
+            PROPERTIES
+            POSITION_INDEPENDENT_CODE ON
+            PREFIX ""
+            OUTPUT_NAME ${LUA_LIBRARY_NAME}
+        )
+    else()
+        set_target_properties(${lua_shared_lib}
+            PROPERTIES
+            POSITION_INDEPENDENT_CODE ON
+            OUTPUT_NAME ${LUA_LIBRARY_NAME}
+        )
+    endif()
 
     # On Unix: Building Lua static library (luaXY.a)
     
