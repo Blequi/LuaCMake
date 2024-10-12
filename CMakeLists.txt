@@ -1,15 +1,13 @@
 cmake_minimum_required(VERSION 3.22.1)
 
 project(LuaCMake
-    VERSION 1.0.2
+    VERSION 1.1.0
     LANGUAGES C
 )
 
 option(DOWNLOAD_LUA_SOURCES "Download Lua sources during the installation process." OFF)
 
-if (NOT DEFINED CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE "Release")
-endif()
+set(CMAKE_BUILD_TYPE "Release" CACHE STRING "The build type.")
 
 include(${PROJECT_SOURCE_DIR}/cmake/building_lua.cmake)
 

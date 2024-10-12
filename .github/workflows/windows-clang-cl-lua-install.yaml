@@ -1,5 +1,5 @@
-name: MSYS2 Lua Install
-run-name: Lua on Windows with MSYS2
+name: CLANG-CL Lua Install
+run-name: Lua on Windows with Clang-cl
 on:
   push:
     paths-ignore:
@@ -11,7 +11,7 @@ on:
       - doc/**
 
 jobs:
-  MSYS2-Lua-Install:
+  CLANG-CL-Lua-Install:
     runs-on: windows-latest
     
     strategy:
@@ -30,26 +30,20 @@ jobs:
           - Release
 
         CMAKE_GENERATOR: 
-          - Unix Makefiles
+          - Ninja
     
-        MSYS2_CONFIG:
-          - { sys: mingw32, env: i686 }
-          - { sys: mingw64, env: x86_64 }
-          - { sys: ucrt64, env: ucrt-x86_64 }
-          - { sys: clang64, env: clang-x86_64 }
-
     steps:
-
+      
       - name: Checkout repository to LuaCMake directory
         uses: actions/checkout@v4
         with:
           path: LuaCMake
       
-      - name: Install C compiler + GNU Make from MSYS2
-        run: C:\msys64\usr\bin\bash.exe -lc "pacman -S mingw-w64-${{ matrix.MSYS2_CONFIG.env }}-cc mingw-w64-${{ matrix.MSYS2_CONFIG.env }}-make --noconfirm --overwrite *"
+      - name: Install Ninja
+        run: choco install ninja
 
-      - name: Update PATH system variable to include C compiler and GNU Make installed by MSYS2
-        run: Add-Content "${{ github.path }}" "C:\msys64\${{ matrix.MSYS2_CONFIG.sys }}\bin"
+      - name: Setup Visual Studio dev prompt
+        uses: ilammy/msvc-dev-cmd@v1
       
       - name: Set environment variables
         run: |
@@ -63,14 +57,7 @@ jobs:
           Add-Content "${{ github.env }}" "LUA_BUILD_DIR=$lua_build_dir"
           Add-Content "${{ github.env }}" "LFS_TEST_FILE=$lfs_test_file"
 
-          # make LuaRocks happy ;)
-          #
-          # at the moment, removing the next "CC=cc" line,
-          # LuaRocks will use 'mingw32-gcc' for CC on 32-bits:
-          # for more info, see
-          # https://github.com/luarocks/luarocks/blob/c2c0272d973929fa1f74e4dcbc11402a5c5273e6/src/luarocks/core/cfg.lua#L350
-
-          Add-Content "${{ github.env }}" "CC=cc"
+          Add-Content "${{ github.env }}" "CC=clang-cl"
       
       - name: Place Lua and LuaRocks on system environment PATH variable
         run: |

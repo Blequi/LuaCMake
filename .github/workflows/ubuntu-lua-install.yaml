@@ -1,48 +1,135 @@
 name: Ubuntu Lua Install
-run-name: Testing out Lua install on Ubuntu
-on: [push]
+run-name: Lua on Ubuntu
+on:
+  push:
+    paths-ignore:
+      - "**.md"
+      - doc/**
+  pull_request:
+    paths-ignore:
+      - "**.md"
+      - doc/**
+
 jobs:
   Ubuntu-Lua-Install:
     runs-on: ubuntu-latest
+    
     strategy:
-      matrix:
-        LUA_VERSION: ['5.1.5', '5.2.4', '5.3.6', '5.4.6']
-        LUAROCKS_VERSION: ['3.11.0']
+      
+      matrix:  
+        LUA_VERSION:
+          - 5.1.5
+          - 5.2.4
+          - 5.3.6
+          - 5.4.7
+        
+        LUAROCKS_VERSION:
+          - 3.11.1
+
+        CMAKE_BUILD_TYPE: 
+          - Release
+
+        CMAKE_GENERATOR: 
+          - Unix Makefiles
+    
     steps:
+      
       - name: Checkout repository to LuaCMake directory
         uses: actions/checkout@v4
         with:
           path: LuaCMake
+        
+      - name: Set environment variables
+        run: |
+          echo "LUA_DIR=${{ runner.temp }}/lua/${{ matrix.LUA_VERSION }}" >> ${{ github.env }}
+          echo "LUAROCKS_DIR=${{ runner.temp }}/luarocks/${{ matrix.LUAROCKS_VERSION }}" >> ${{ github.env }}
+          echo "LUA_BUILD_DIR=${{ runner.temp }}/lua-build" >> ${{ github.env }}
+          echo "LFS_TEST_FILE=${{ runner.temp }}/lfs-test.lua" >> ${{ github.env }}
+      
+      - name: Place Lua and LuaRocks bin directories on system environment PATH variable
+        run: |
+          echo "${{ env.LUA_DIR }}/bin" >> ${{ github.path }}
+          echo "${{ env.LUAROCKS_DIR }}/bin" >> ${{ github.path }}
+      
       - name: Configure the build of Lua ${{ matrix.LUA_VERSION }}
-        run: cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DDOWNLOAD_LUA_SOURCES=ON "-DLUA_VERSION=${{ matrix.LUA_VERSION }}" --install-prefix $RUNNER_TEMP/Lua-install/${{ matrix.LUA_VERSION }} -S LuaCMake -B $RUNNER_TEMP/Lua-build/${{ matrix.LUA_VERSION }}
+        run: |
+          cmake \
+            -G "${{ matrix.CMAKE_GENERATOR }}" \
+            -DCMAKE_BUILD_TYPE=${{ matrix.CMAKE_BUILD_TYPE }} \
+            -DDOWNLOAD_LUA_SOURCES=ON \
+            -DLUA_VERSION=${{ matrix.LUA_VERSION }} \
+            --install-prefix "${{ env.LUA_DIR }}" \
+            -S LuaCMake \
+            -B "${{ env.LUA_BUILD_DIR }}"
+      
       - name: Build Lua ${{ matrix.LUA_VERSION }}
-        run: cmake --build $RUNNER_TEMP/Lua-build/${{ matrix.LUA_VERSION }} --config Release
+        run: cmake --build "${{ env.LUA_BUILD_DIR }}" --config ${{ matrix.CMAKE_BUILD_TYPE }}
+      
       - name: Install Lua ${{ matrix.LUA_VERSION }}
-        run: cmake --install $RUNNER_TEMP/Lua-build/${{ matrix.LUA_VERSION }} --config Release
+        run: cmake --install "${{ env.LUA_BUILD_DIR }}" --config ${{ matrix.CMAKE_BUILD_TYPE }}
+      
       - name: Test Lua ${{ matrix.LUA_VERSION }}
-        run: $RUNNER_TEMP/Lua-install/${{ matrix.LUA_VERSION }}/bin/lua -v
+        run: lua -v
+      
       - name: Download LuaRocks
         run: wget https://luarocks.org/releases/luarocks-${{ matrix.LUAROCKS_VERSION }}.tar.gz
+      
       - name: Unpack LuaRocks
         run: tar -xf luarocks-${{ matrix.LUAROCKS_VERSION }}.tar.gz
+      
       - name: Configure LuaRocks
-        run: ./configure --prefix=$RUNNER_TEMP/LuaRocks-install/${{ matrix.LUAROCKS_VERSION }} --with-lua=$RUNNER_TEMP/Lua-install/${{ matrix.LUA_VERSION }}
+        run: |
+          ./configure \
+            "--prefix=${{ env.LUAROCKS_DIR }}" \
+            "--with-lua=${{ env.LUA_DIR }}"
         working-directory: ./luarocks-${{ matrix.LUAROCKS_VERSION }} 
+      
       - name: Build LuaRocks
         run: make
         working-directory: ./luarocks-${{ matrix.LUAROCKS_VERSION }} 
+      
       - name: Install LuaRocks
         run: make install
-        working-directory: ./luarocks-${{ matrix.LUAROCKS_VERSION }} 
-      - name: Install LuaFileSystem
-        run: $RUNNER_TEMP/LuaRocks-install/${{ matrix.LUAROCKS_VERSION }}/bin/luarocks install luafilesystem
-      - name: Test LuaFileSystem
+        working-directory: ./luarocks-${{ matrix.LUAROCKS_VERSION }}
+
+      - name: Update environment variables with variables from LuaRocks
         run: |
-          $RUNNER_TEMP/LuaRocks-install/${{ matrix.LUAROCKS_VERSION }}/bin/luarocks path > vars
-          declare -a arr
-          arr+=("/usr/bin/env")
-          for line in 1 2 3; do arr+=($(cat vars | sed -n ${line}p | sed -En "s/export //p" | sed -En "s/([a-zA-Z0-9_]+)\='([^']+)'/\"\1=\2\"/p")); done
-          arr+=("$RUNNER_TEMP/Lua-install/${{ matrix.LUA_VERSION }}/bin/lua" "-e" "\"local lfs = require'lfs'; function attrdir (path) for file in lfs.dir(path) do if file ~= '.' and file ~= '..' then local f = path..'/'..file; print ('\t '..f); local attr = lfs.attributes (f); assert (type(attr) == 'table'); if attr.mode == 'directory' then attrdir (f); else for name, value in pairs(attr) do print (name, value); end end end end end attrdir ('.')\"")
-          echo ${arr[@]} > lua_command
-          chmod +x lua_command
-          ./lua_command
+          for e in $(luarocks path | sed -e "s/export *//g" | sed -E "s/([a-zA-Z_][a-zA-Z0-9_]*)\='([^']+)'/\1=\2/g");
+          do
+            echo "$e" >> ${{ github.env }};
+          done
+      
+      - name: Install LuaFileSystem
+        run: luarocks install luafilesystem
+      
+      - name: Prepare a test file for LuaFileSystem
+        run: |
+          cat <<EOF > "${{ env.LFS_TEST_FILE }}"
+          
+          -- LuaFileSystem standard example ( see https://lunarmodules.github.io/luafilesystem/examples.html )
+
+          local lfs = require"lfs"
+
+          function attrdir (path)
+              for file in lfs.dir(path) do
+                  if file ~= "." and file ~= ".." then
+                      local f = path..'/'..file
+                      print ("\t "..f)
+                      local attr = lfs.attributes (f)
+                      assert (type(attr) == "table")
+                      if attr.mode == "directory" then
+                          attrdir (f)
+                      else
+                          for name, value in pairs(attr) do
+                              print (name, value)
+                          end
+                      end
+                  end
+              end
+          end
+
+          attrdir (".")
+          EOF
+
+      - name: Test LuaFileSystem
+        run: lua "${{ env.LFS_TEST_FILE }}"
