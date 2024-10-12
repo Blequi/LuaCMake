@@ -5,6 +5,11 @@ libdir=${exec_prefix}/@CMAKE_INSTALL_LIBDIR@
 includedir=${prefix}/@CMAKE_INSTALL_INCLUDEDIR@
 version=@LUA_R@
 
+V=@LUA_V@
+R=@LUA_R@
+INSTALL_BIN=${prefix}/@CMAKE_INSTALL_BINDIR@
+INSTALL_INC=${prefix}/@CMAKE_INSTALL_INCLUDEDIR@
+INSTALL_LIB=${prefix}/@CMAKE_INSTALL_LIBDIR@
 INSTALL_LMOD=${prefix}/@CMAKE_INSTALL_DATAROOTDIR@/lua/@LUA_V@
 INSTALL_CMOD=${prefix}/@CMAKE_INSTALL_LIBDIR@/lua/@LUA_V@
 
@@ -13,4 +18,5 @@ Description: Lua language engine
 Version: ${version}
 Requires:
 Libs: -L${libdir} -l${lib_name}
+Libs.private: @LUA_PKG_CONFIG_PRIVATE_LIBS@
 Cflags: -I${includedir}

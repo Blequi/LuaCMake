@@ -272,15 +272,8 @@ function(process_lua_from_source_code_dir source_code_dir major_version minor_ve
                 list(APPEND LUA_PKG_CONFIG_PRIVATE_LIBS_LIST "-ldl")
             endif()
 
-            list(LENGTH LUA_PKG_CONFIG_PRIVATE_LIBS_LIST LUA_PKG_CONFIG_PRIVATE_LIBS_LEN)
+            configure_file(${PROJECT_SOURCE_DIR}/cmake/lua.pc.in ${pkg_config_file} @ONLY)
 
-            if (LUA_PKG_CONFIG_PRIVATE_LIBS_LEN GREATER 0)
-                list(JOIN LUA_PKG_CONFIG_PRIVATE_LIBS_LIST " " LUA_PKG_CONFIG_PRIVATE_LIBS)
-                configure_file(lua-with-priv.pc.in ${pkg_config_file} @ONLY)
-            else()
-                configure_file(lua.pc.in ${pkg_config_file} @ONLY)
-            endif()
-            
             # Install luaXY.pc
             install(FILES ${pkg_config_file} DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 
