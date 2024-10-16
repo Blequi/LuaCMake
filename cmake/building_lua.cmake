@@ -53,6 +53,19 @@ function(process_lua_from_source_code_dir source_code_dir major_version minor_ve
     set(LUA_R ${LUA_V}.${release_version})
     set(LUA_SUFFIX "${major_version}${minor_version}")
     set(LUA_LIBRARY_NAME "lua${LUA_SUFFIX}")
+    
+    if (WIN32)
+        if (${LUA_R} VERSION_LESS_EQUAL "5.2.4")
+            set(LUA_LDIR "${CMAKE_INSTALL_BINDIR}/lua")
+            set(LUA_CDIR "${CMAKE_INSTALL_BINDIR}")
+        else()
+            set(LUA_LDIR "${CMAKE_INSTALL_DATAROOTDIR}/lua/${LUA_V}")
+            set(LUA_CDIR "${CMAKE_INSTALL_LIBDIR}/lua/${LUA_V}")
+        endif()
+    else()
+        set(LUA_LDIR "${CMAKE_INSTALL_DATAROOTDIR}/lua/${LUA_V}")
+        set(LUA_CDIR "${CMAKE_INSTALL_LIBDIR}/lua/${LUA_V}")
+    endif()
 
     message(STATUS "Building Lua version: ${LUA_R}")
 
