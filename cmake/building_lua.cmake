@@ -22,11 +22,26 @@ endif()
 
 CHECK_FUNCTION_EXISTS(readline HAVE_READLINE)
 
+set(_BSD_NAMES "FreeBSD;NetBSD;OpenBSD;DragonFly;MirBSD")
+
+if ("${CMAKE_SYSTEM_NAME}" IN_LIST _BSD_NAMES)
+    set(_BSD_LIKE ON)
+    set(_READLINE_LIBNAME edit)
+    find_path(READLINE_H_PARENT_INCLUDE_DIR "edit/readline/readline.h"
+        REQUIRED)
+    
+    set(READLINE_H_INCLUDE_DIR "${READLINE_H_PARENT_INCLUDE_DIR}/edit")
+else()
+    set(_BSD_LIKE OFF)
+    set(_READLINE_LIBNAME readline)
+endif()
+
 if (NOT HAVE_READLINE)
-    CHECK_LIBRARY_EXISTS(readline readline "" HAVE_LIBREADLINE)
+
+    CHECK_LIBRARY_EXISTS(${_READLINE_LIBNAME} readline "" HAVE_LIBREADLINE)
 
     if (HAVE_LIBREADLINE)
-        list(APPEND CMAKE_REQUIRED_LIBRARIES readline)
+        list(APPEND CMAKE_REQUIRED_LIBRARIES ${_READLINE_LIBNAME})
     endif()
 endif()
 
@@ -96,7 +111,8 @@ function(process_lua_from_source_code_dir source_code_dir major_version minor_ve
     
     if (WIN32)
         target_compile_definitions(${lua_shared_lib} PRIVATE LUA_BUILD_AS_DLL)
-    elseif ("${CMAKE_SYSTEM_NAME}" IN_LIST "FreeBSD;NetBSD;OpenBSD")
+    elseif (_BSD_LIKE)
+        target_include_directories(${lua_shared_lib} PRIVATE "${READLINE_H_INCLUDE_DIR}")
         target_compile_definitions(${lua_shared_lib} PRIVATE "LUA_USE_LINUX" "LUA_USE_READLINE")
     elseif ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
         target_compile_definitions(${lua_shared_lib} PRIVATE "LUA_USE_LINUX")
@@ -113,7 +129,7 @@ function(process_lua_from_source_code_dir source_code_dir major_version minor_ve
     endif()
 
     if (HAVE_LIBREADLINE)
-        target_link_libraries(${lua_shared_lib} PRIVATE readline)
+        target_link_libraries(${lua_shared_lib} PRIVATE ${_READLINE_LIBNAME})
     endif()
 
     if (HAVE_LIBDL)
@@ -143,7 +159,8 @@ function(process_lua_from_source_code_dir source_code_dir major_version minor_ve
         add_library(${lua_static_lib} STATIC ${LUA_LIBRARY_SOURCE_FILES})
         target_compile_definitions(${lua_static_lib} PRIVATE ${LUA_COMPAT})
 
-        if ("${CMAKE_SYSTEM_NAME}" IN_LIST "FreeBSD;NetBSD;OpenBSD")
+        if (_BSD_LIKE)
+            target_include_directories(${lua_static_lib} PRIVATE "${READLINE_H_INCLUDE_DIR}")
             target_compile_definitions(${lua_static_lib} PRIVATE "LUA_USE_LINUX" "LUA_USE_READLINE")
         elseif ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
             target_compile_definitions(${lua_static_lib} PRIVATE "LUA_USE_LINUX")
@@ -160,7 +177,7 @@ function(process_lua_from_source_code_dir source_code_dir major_version minor_ve
         endif()
 
         if (HAVE_LIBREADLINE)
-            target_link_libraries(${lua_static_lib} PRIVATE readline)
+            target_link_libraries(${lua_static_lib} PRIVATE ${_READLINE_LIBNAME})
         endif()
 
         if (HAVE_LIBDL)
@@ -196,7 +213,7 @@ function(process_lua_from_source_code_dir source_code_dir major_version minor_ve
     endif()
 
     if (HAVE_LIBREADLINE)
-        target_link_libraries(${lua_interpreter} PRIVATE readline)
+        target_link_libraries(${lua_interpreter} PRIVATE ${_READLINE_LIBNAME})
     endif()
 
     if (HAVE_LIBDL)
@@ -226,7 +243,7 @@ function(process_lua_from_source_code_dir source_code_dir major_version minor_ve
     endif()
 
     if (HAVE_LIBREADLINE)
-        target_link_libraries(${lua_compiler} PRIVATE readline)
+        target_link_libraries(${lua_compiler} PRIVATE ${_READLINE_LIBNAME})
     endif()
 
     if (HAVE_LIBDL)
@@ -278,11 +295,25 @@ function(process_lua_from_source_code_dir source_code_dir major_version minor_ve
             endif()
 
             if (HAVE_LIBREADLINE)
-                list(APPEND LUA_PKG_CONFIG_PRIVATE_LIBS_LIST "-lreadline")
+                list(APPEND LUA_PKG_CONFIG_PRIVATE_LIBS_LIST "-l${_READLINE_LIBNAME}")
             endif()
 
             if (HAVE_LIBDL)
                 list(APPEND LUA_PKG_CONFIG_PRIVATE_LIBS_LIST "-ldl")
+            endif()
+
+            list(JOIN LUA_PKG_CONFIG_PRIVATE_LIBS_LIST " " LUA_PKG_CONFIG_PRIVATE_LIBS)
+
+            if ("${LUA_COMPAT}" STREQUAL "")
+                set(LUA_PKG_CONFG_COMPAT_DEFINITION "")
+            else()
+                set(LUA_PKG_CONFG_COMPAT_DEFINITION "-D${LUA_COMPAT}")
+            endif()
+
+            if (_BSD_LIKE)
+                set(LUA_EXTRA_INC_DIR "-I${READLINE_H_INCLUDE_DIR}")
+            else()
+                set(LUA_EXTRA_INC_DIR "")
             endif()
 
             configure_file(${PROJECT_SOURCE_DIR}/cmake/lua.pc.in ${pkg_config_file} @ONLY)

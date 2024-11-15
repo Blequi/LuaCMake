@@ -19,4 +19,4 @@ Version: ${version}
 Requires:
 Libs: -L${libdir} -l${lib_name}
 Libs.private: @LUA_PKG_CONFIG_PRIVATE_LIBS@
-Cflags: -I${includedir}
+Cflags: -I${includedir} @LUA_EXTRA_INC_DIR@ @LUA_PKG_CONFG_COMPAT_DEFINITION@
