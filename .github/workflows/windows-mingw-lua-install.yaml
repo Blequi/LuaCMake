@@ -1,5 +1,5 @@
-name: MSVC Lua Install
-run-name: Lua on Windows with Visual Studio
+name: MinGW Lua Install
+run-name: Lua on Windows with MinGW
 on:
   push:
     paths-ignore:
@@ -11,7 +11,7 @@ on:
       - "doc"
 
 jobs:
-  MSVC-Lua-Install:
+  MinGW-Lua-Install:
     runs-on: windows-latest
 
     strategy:
@@ -29,6 +29,9 @@ jobs:
         CMAKE_BUILD_TYPE:
           - Release
 
+        CMAKE_GENERATOR:
+          - Unix Makefiles
+
     steps:
 
       - name: Checkout repository to LuaCMake directory
@@ -36,8 +39,130 @@ jobs:
         with:
           path: LuaCMake
 
-      - name: Setup Visual Studio MSVC dev prompt
-        uses: ilammy/msvc-dev-cmd@v1
+        # MinGW from sourceforge:
+        # https://sourceforge.net/projects/mingw
+      - name: Download and extract MinGW
+        run: |
+          $mingw32_dir = Join-Path -Path "${{ runner.temp }}" -ChildPath "MinGW";
+
+          if (Test-Path -Path $mingw32_dir)
+          {
+            Remove-Item -Path $mingw32_dir -Recurse;
+          }
+
+          New-Item -Path $mingw32_dir -Type Directory;
+
+          cd $mingw32_dir;
+
+          $SEVEN_ZIP = Join-Path -Path ${env:ProgramFiles} -ChildPath "7-Zip" |
+            Join-Path -ChildPath "7z.exe";
+          $MINGW32_GET_PACKAGE_VER = "mingw-get-0.6.2-beta-20131004-1";
+          $MINGW32_PACKAGE_VER = "0.6.2-mingw32-beta-20131004-1";
+
+          foreach ($package in @("mingw-get-setup"))
+          {
+            foreach ($kind in @("dll", "xml"))
+            {
+              $filename = "${package}-${MINGW32_PACKAGE_VER}-${kind}";
+              $tarfile = "${filename}.tar";
+              $xzfile = "${tarfile}.xz";
+              $url = "https://sourceforge.net/projects/mingw/files/Installer/mingw-get/${MINGW32_GET_PACKAGE_VER}/${xzfile}";
+
+              Write-Host "Downloading package from ""${url}""";
+
+              curl -L -O "${url}";
+
+              & $SEVEN_ZIP x $xzfile;
+
+              if ($LASTEXITCODE -ne 0)
+              {
+                Write-Host "Failed to extract $xzfile";
+                exit 1;
+              }
+
+              & $SEVEN_ZIP x $tarfile;
+
+              if ($LASTEXITCODE -ne 0)
+              {
+                Write-Host "Failed to extract $tarfile";
+                exit 1;
+              }
+            }
+          }
+
+          foreach ($package in @("pkginfo"))
+          {
+            foreach ($kind in @("bin"))
+            {
+              $filename = "${package}-${MINGW32_PACKAGE_VER}-${kind}";
+              $tarfile = "${filename}.tar";
+              $xzfile = "${tarfile}.xz";
+              $url = "https://sourceforge.net/projects/mingw/files/Installer/mingw-get/${MINGW32_GET_PACKAGE_VER}/${xzfile}";
+
+              Write-Host "Downloading package from ""${url}""";
+
+              curl -L -O "${url}";
+
+              & $SEVEN_ZIP x $xzfile;
+
+              if ($LASTEXITCODE -ne 0)
+              {
+                Write-Host "Failed to extract $xzfile";
+                exit 1;
+              }
+
+              & $SEVEN_ZIP x $tarfile;
+
+              if ($LASTEXITCODE -ne 0)
+              {
+                Write-Host "Failed to extract $tarfile";
+                exit 1;
+              }
+            }
+          }
+
+          foreach ($package in @("mingw-get"))
+          {
+            foreach ($kind in @("bin", "gui", "lic", "src"))
+            {
+              $filename = "${package}-${MINGW32_PACKAGE_VER}-${kind}";
+              $tarfile = "${filename}.tar";
+              $xzfile = "${tarfile}.xz";
+              $url = "https://sourceforge.net/projects/mingw/files/Installer/mingw-get/${MINGW32_GET_PACKAGE_VER}/${xzfile}";
+
+              Write-Host "Downloading package from ""${url}""";
+
+              curl -L -O "${url}";
+
+              & $SEVEN_ZIP x $xzfile;
+
+              if ($LASTEXITCODE -ne 0)
+              {
+                Write-Host "Failed to extract $xzfile";
+                exit 1;
+              }
+
+              & $SEVEN_ZIP x $tarfile;
+
+              if ($LASTEXITCODE -ne 0)
+              {
+                Write-Host "Failed to extract $tarfile";
+                exit 1;
+              }
+            }
+          }
+
+          $mingw32_bindir = Join-Path -Path "${mingw32_dir}" -ChildPath "bin";
+          $mingw32_gcc = Join-Path -Path "${mingw32_bindir}" -ChildPath "mingw32-gcc.exe";
+
+          Add-Content "${{ github.path }}" "${mingw32_bindir}";
+          Add-Content "${{ github.env }}" "CC=${mingw32_gcc}";
+
+      - name: Update MinGW catalogue
+        run: mingw-get update
+
+      - name: Install GCC compiler and GNU Make
+        run: mingw-get install --all-related mingw32-gcc mingw32-make
 
       - name: Set environment variables
         run: |
@@ -61,6 +186,7 @@ jobs:
       - name: Configure the build of Lua ${{ matrix.LUA_VERSION }}
         run: |
           cmake `
+            -G "${{ matrix.CMAKE_GENERATOR }}" `
             -DCMAKE_BUILD_TYPE=${{ matrix.CMAKE_BUILD_TYPE }} `
             -DDOWNLOAD_LUA_SOURCES=ON `
             "-DLUA_VERSION=${{ matrix.LUA_VERSION }}" `

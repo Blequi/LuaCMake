@@ -1,5 +1,5 @@
-name: Ubuntu Lua Install
-run-name: Lua on Ubuntu
+name: macOS Lua Install
+run-name: Lua on macOS
 on:
   push:
     paths-ignore:
@@ -11,8 +11,8 @@ on:
       - "doc"
 
 jobs:
-  Ubuntu-Lua-Install:
-    runs-on: ubuntu-latest
+  macOS-Lua-Install:
+    runs-on: macos-latest
 
     strategy:
 

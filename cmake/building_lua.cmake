@@ -29,7 +29,7 @@ if ("${CMAKE_SYSTEM_NAME}" IN_LIST _BSD_NAMES)
     set(_READLINE_LIBNAME edit)
     find_path(READLINE_H_PARENT_INCLUDE_DIR "edit/readline/readline.h"
         REQUIRED)
-    
+
     set(READLINE_H_INCLUDE_DIR "${READLINE_H_PARENT_INCLUDE_DIR}/edit")
 else()
     set(_BSD_LIKE OFF)
@@ -68,7 +68,7 @@ function(process_lua_from_source_code_dir source_code_dir major_version minor_ve
     set(LUA_R ${LUA_V}.${release_version})
     set(LUA_SUFFIX "${major_version}${minor_version}")
     set(LUA_LIBRARY_NAME "lua${LUA_SUFFIX}")
-    
+
     if (WIN32)
         if (${LUA_R} VERSION_LESS_EQUAL "5.2.4")
             set(LUA_LDIR "${CMAKE_INSTALL_BINDIR}/lua")
@@ -88,9 +88,9 @@ function(process_lua_from_source_code_dir source_code_dir major_version minor_ve
 
     set(LUA_SOURCE_CODE_SRC_DIR "${LUA_SOURCE_CODE_ESCAPED_DIR}/src")
     set(LUA_SOURCE_CODE_DOC_DIR "${LUA_SOURCE_CODE_ESCAPED_DIR}/doc")
-    
+
     file(STRINGS "${LUA_SOURCE_CODE_SRC_DIR}/Makefile" lua_src_makefile_content REGEX " -DLUA_COMPAT_[a-zA-Z0-9_]+ ")
-    
+
     if (${lua_src_makefile_content} MATCHES " -D(LUA_COMPAT_[a-zA-Z0-9_]+) ")
         set(LUA_COMPAT ${CMAKE_MATCH_1})
         message(STATUS "Lua compatibility mode: ${LUA_COMPAT}")
@@ -98,9 +98,12 @@ function(process_lua_from_source_code_dir source_code_dir major_version minor_ve
         set(LUA_COMPAT "")
         message(STATUS "Lua compatibility mode not found. Building with compatibility disabled.")
     endif()
-    
-    file(GLOB LUA_LIBRARY_SOURCE_FILES ${LUA_SOURCE_CODE_SRC_DIR}/*.c)
+
+    file(GLOB LUA_LIBRARY_SOURCE_FILES ${LUA_SOURCE_CODE_SRC_DIR}/l*.c)
     list(FILTER LUA_LIBRARY_SOURCE_FILES EXCLUDE REGEX "luac?\\.c$")
+
+    file(GLOB LUAC_SOURCE_FILES ${LUA_SOURCE_CODE_SRC_DIR}/*.c)
+    list(FILTER LUAC_SOURCE_FILES EXCLUDE REGEX "lua?\\.c$")
 
     # Building Lua shared library (luaXY.dll on Windows and libluaXY.so on Unix)
 
@@ -108,7 +111,7 @@ function(process_lua_from_source_code_dir source_code_dir major_version minor_ve
 
     add_library(${lua_shared_lib} SHARED ${LUA_LIBRARY_SOURCE_FILES})
     target_compile_definitions(${lua_shared_lib} PRIVATE ${LUA_COMPAT})
-    
+
     if (WIN32)
         target_compile_definitions(${lua_shared_lib} PRIVATE LUA_BUILD_AS_DLL)
     elseif (_BSD_LIKE)
@@ -117,11 +120,18 @@ function(process_lua_from_source_code_dir source_code_dir major_version minor_ve
     elseif ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
         target_compile_definitions(${lua_shared_lib} PRIVATE "LUA_USE_LINUX")
     elseif ("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
-        target_compile_definitions(${lua_shared_lib} PRIVATE "LUA_USE_MACOSX" "LUA_USE_READLINE")
+        target_compile_definitions(${lua_shared_lib} PRIVATE "LUA_USE_MACOSX")
+        if (LUA_V VERSION_GREATER "5.3.6")
+            target_compile_definitions(${lua_shared_lib} PRIVATE "LUA_USE_READLINE")
+        endif()
     elseif ("${CMAKE_SYSTEM_NAME}" STREQUAL "iOS")
-        target_compile_definitions(${lua_shared_lib} PRIVATE "LUA_USE_IOS")
+        if (LUA_V VERSION_GREATER "5.3.6")
+            target_compile_definitions(${lua_shared_lib} PRIVATE "LUA_USE_IOS")
+        else()
+            target_compile_definitions(${lua_shared_lib} PRIVATE "LUA_USE_MACOSX" "LUA_USE_READLINE")
+        endif()
     endif()
-    
+
     target_include_directories(${lua_shared_lib} PRIVATE ${LUA_SOURCE_CODE_SRC_DIR})
 
     if (HAVE_LIBM)
@@ -152,7 +162,7 @@ function(process_lua_from_source_code_dir source_code_dir major_version minor_ve
     endif()
 
     # On Unix: Building Lua static library (luaXY.a)
-    
+
     if (UNIX)
         set(lua_static_lib "lua${LUA_SUFFIX}_static")
 
@@ -203,7 +213,9 @@ function(process_lua_from_source_code_dir source_code_dir major_version minor_ve
         target_link_libraries(${lua_interpreter} PRIVATE ${lua_shared_lib})
     elseif (UNIX)
         target_link_libraries(${lua_interpreter} PRIVATE ${lua_static_lib})
-        target_link_options(${lua_interpreter} PRIVATE "LINKER:-E")
+        if (NOT APPLE)
+            target_link_options(${lua_interpreter} PRIVATE "LINKER:-E")
+        endif()
     else()
         message(FATAL_ERROR "Unsupported Operating System.")
     endif()
@@ -225,11 +237,12 @@ function(process_lua_from_source_code_dir source_code_dir major_version minor_ve
     set(lua_compiler "luac")
 
     if (WIN32)
-        add_executable(${lua_compiler} ${LUA_LIBRARY_SOURCE_FILES} ${LUA_SOURCE_CODE_SRC_DIR}/luac.c)
+        add_executable(${lua_compiler} ${LUAC_SOURCE_FILES})
     elseif (UNIX)
-        add_executable(${lua_compiler} ${LUA_SOURCE_CODE_SRC_DIR}/luac.c)
-        target_link_libraries(${lua_compiler} PRIVATE ${lua_static_lib})
-        target_link_options(${lua_compiler} PRIVATE "LINKER:-E")
+        add_executable(${lua_compiler} ${LUAC_SOURCE_FILES})
+        if (NOT APPLE)
+            target_link_options(${lua_compiler} PRIVATE "LINKER:-E")
+        endif()
     else()
         message(FATAL_ERROR "Unsupported Operating System.")
     endif()
@@ -251,7 +264,7 @@ function(process_lua_from_source_code_dir source_code_dir major_version minor_ve
     endif()
 
     # Installation
-	
+
     file(STRINGS "${LUA_SOURCE_CODE_ESCAPED_DIR}/Makefile" lua_makefile_to_inc_content REGEX "TO_INC=[a-zA-Z0-9_\\. ]+")
 
     foreach (to_inc_content ${lua_makefile_to_inc_content})
@@ -259,7 +272,7 @@ function(process_lua_from_source_code_dir source_code_dir major_version minor_ve
             set(lua_headers "")
 
             STRING(REGEX REPLACE " +" ";" lua_header_file_names "${CMAKE_MATCH_2} ${CMAKE_MATCH_3}")
-            
+
             foreach(lua_header_file ${lua_header_file_names})
                 list(APPEND lua_headers "${LUA_SOURCE_CODE_SRC_DIR}/${lua_header_file}")
             endforeach()
@@ -352,7 +365,7 @@ function(process_lua_from_archive archive_file)
         if (NOT EXISTS ${LUA_SOURCE_CODE_DIR})
             message(FATAL_ERROR "Failed to extract ${archive_file}")
         endif()
-        
+
         process_lua_from_source_code_dir(${LUA_SOURCE_CODE_DIR} ${LUA_MAJOR_VERSION} ${LUA_MINOR_VERSION} ${LUA_RELEASE_VERSION})
     else()
         message(FATAL_ERROR "The archive name was modified")

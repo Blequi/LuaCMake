@@ -8,19 +8,19 @@
 
 ## Summary
 
-**LuaCMake** provides a way to install [Lua](https://www.lua.org) on multiple platforms (special focus on Windows), and multiple C toolchains, throughout the powerful software build system [CMake](https://cmake.org). ``LuaCMake`` allows users with limited C/C++ skills to build ``Lua`` directly from the source code and install it on a target machine by the use of ``cmake``, alongside a C compiler toolchain installed.
+**LuaCMake** provides a way to install [Lua](https://www.lua.org) on multiple platforms, and multiple C toolchains, throughout the powerful software build system [CMake](https://cmake.org). ``LuaCMake`` allows users with limited C/C++ skills to build ``Lua`` directly from the source code and install it on a target machine by the use of ``cmake``, alongside a C compiler toolchain installed.
 
 ## Tested platforms and C toolchains
 
 At the moment, ``LuaCMake`` has been tested to build and install different versions of Lua on the following operating systems and C compiler toolchains:
 
-|            | Windows 11       | Ubuntu 22.04.3                                               |
-|---         |---               |---                                                           |
-|Toolchain    | Visual Studio 2022 C/C++ x86/x64 build tools [![VS workflow](https://github.com/Blequi/LuaCMake/actions/workflows/windows-visual-studio-lua-install.yaml/badge.svg?branch=main)](./.github/workflows/windows-visual-studio-lua-install.yaml) | GCC 11.4.0 + GNU Make 4.3 from Ubuntu [![Ubuntu workflow](https://github.com/Blequi/LuaCMake/actions/workflows/ubuntu-lua-install.yaml/badge.svg?branch=main)](./.github/workflows/ubuntu-lua-install.yaml)           |
-|            | clang-cl 18.1.8 + Ninja 1.12.1 [![clang-cl workflow](https://github.com/Blequi/LuaCMake/actions/workflows/windows-clang-cl-lua-install.yaml/badge.svg?branch=main)](./.github/workflows/windows-clang-cl-lua-install.yaml)                           |      |
-|            | GCC 14.2.0 + GNU Make 4.4.1 from [MSYS2](https://www.msys2.org) [![MSYS2 workflow](https://github.com/Blequi/LuaCMake/actions/workflows/windows-msys2-lua-install.yaml/badge.svg?branch=main)](./.github/workflows/windows-msys2-lua-install.yaml)                           |      |
-|            | Clang 18.1.8 + GNU Make 4.4.1 from [MSYS2](https://www.msys2.org)  [![MSYS2 workflow](https://github.com/Blequi/LuaCMake/actions/workflows/windows-msys2-lua-install.yaml/badge.svg?branch=main)](./.github/workflows/windows-msys2-lua-install.yaml)        |      |
-|            | GCC 6.3.0 + GNU Make 3.82.90 from [MinGW](https://sourceforge.net/projects/mingw)         |      |
+|            | Windows       | Ubuntu | macOS                                               |
+|---         |---            |---     |---                                                           |
+|Toolchain    | Visual Studio C/C++ build tools<br>[![VS workflow](https://github.com/Blequi/LuaCMake/actions/workflows/windows-visual-studio-lua-install.yaml/badge.svg)](./.github/workflows/windows-visual-studio-lua-install.yaml) | GCC + GNU Make from Ubuntu<br>[![Ubuntu workflow](https://github.com/Blequi/LuaCMake/actions/workflows/ubuntu-lua-install.yaml/badge.svg)](./.github/workflows/ubuntu-lua-install.yaml)           | Apple Clang + GNU Make from macOS<br>[![macOS workflow](https://github.com/Blequi/LuaCMake/actions/workflows/macos-lua-install.yaml/badge.svg)](./.github/workflows/macos-lua-install.yaml)           |
+|            | clang-cl + Ninja<br>[![clang-cl workflow](https://github.com/Blequi/LuaCMake/actions/workflows/windows-clang-cl-lua-install.yaml/badge.svg)](./.github/workflows/windows-clang-cl-lua-install.yaml)                           |      |      |
+|            | GCC + GNU Make from [MSYS2](https://www.msys2.org)<br>[![MSYS2 workflow](https://github.com/Blequi/LuaCMake/actions/workflows/windows-msys2-lua-install.yaml/badge.svg)](./.github/workflows/windows-msys2-lua-install.yaml)                           |      |      |
+|            | Clang + GNU Make from [MSYS2](https://www.msys2.org)<br>[![MSYS2 workflow](https://github.com/Blequi/LuaCMake/actions/workflows/windows-msys2-lua-install.yaml/badge.svg)](./.github/workflows/windows-msys2-lua-install.yaml)        |      |      |
+|            | GCC + GNU Make from [MinGW](https://sourceforge.net/projects/mingw)<br>[![MinGW workflow](https://github.com/Blequi/LuaCMake/actions/workflows/windows-mingw-lua-install.yaml/badge.svg)](./.github/workflows/windows-mingw-lua-install.yaml)         |      |      |
 
 ## Usage
 

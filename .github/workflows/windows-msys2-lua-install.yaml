@@ -3,36 +3,36 @@ run-name: Lua on Windows with MSYS2
 on:
   push:
     paths-ignore:
-      - "**.md"
-      - doc/**
+      - "**/*.md"
+      - "doc"
   pull_request:
     paths-ignore:
-      - "**.md"
-      - doc/**
+      - "**/*.md"
+      - "doc"
 
 jobs:
   MSYS2-Lua-Install:
     runs-on: windows-latest
-    
+
     strategy:
-      
+
       matrix:
         LUA_VERSION:
           - 5.1.5
           - 5.2.4
           - 5.3.6
-          - 5.4.7
-        
-        LUAROCKS_VERSION:
-          - 3.11.1
+          - 5.4.8
 
-        CMAKE_BUILD_TYPE: 
+        LUAROCKS_VERSION:
+          - 3.12.2
+
+        CMAKE_BUILD_TYPE:
           - Release
 
-        CMAKE_GENERATOR: 
+        CMAKE_GENERATOR:
           - Unix Makefiles
-    
-        MSYS2_CONFIG:
+
+        MSYS2-CONFIG:
           - { sys: mingw32, env: i686 }
           - { sys: mingw64, env: x86_64 }
           - { sys: ucrt64, env: ucrt-x86_64 }
@@ -44,13 +44,13 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: LuaCMake
-      
+
       - name: Install C compiler + GNU Make from MSYS2
-        run: C:\msys64\usr\bin\bash.exe -lc "pacman -S mingw-w64-${{ matrix.MSYS2_CONFIG.env }}-cc mingw-w64-${{ matrix.MSYS2_CONFIG.env }}-make --noconfirm --overwrite *"
+        run: C:\msys64\usr\bin\bash.exe -lc "pacman -S mingw-w64-${{ matrix.MSYS2-CONFIG.env }}-cc mingw-w64-${{ matrix.MSYS2-CONFIG.env }}-make --noconfirm --overwrite *"
 
       - name: Update PATH system variable to include C compiler and GNU Make installed by MSYS2
-        run: Add-Content "${{ github.path }}" "C:\msys64\${{ matrix.MSYS2_CONFIG.sys }}\bin"
-      
+        run: Add-Content "${{ github.path }}" "C:\msys64\${{ matrix.MSYS2-CONFIG.sys }}\bin"
+
       - name: Set environment variables
         run: |
           $lua_dir = [System.IO.Path]::Combine("${{ runner.temp }}", "lua", "${{ matrix.LUA_VERSION }}");
@@ -63,19 +63,12 @@ jobs:
           Add-Content "${{ github.env }}" "LUA_BUILD_DIR=$lua_build_dir"
           Add-Content "${{ github.env }}" "LFS_TEST_FILE=$lfs_test_file"
 
-          # make LuaRocks happy ;)
-          #
-          # at the moment, removing the next "CC=cc" line,
-          # LuaRocks will use 'mingw32-gcc' for CC on 32-bits:
-          # for more info, see
-          # https://github.com/luarocks/luarocks/blob/c2c0272d973929fa1f74e4dcbc11402a5c5273e6/src/luarocks/core/cfg.lua#L350
-
           Add-Content "${{ github.env }}" "CC=cc"
-      
+
       - name: Place Lua and LuaRocks on system environment PATH variable
         run: |
           $lua_bin_dir = [System.IO.Path]::Combine("${{ env.LUA_DIR }}", "bin");
-      
+
           Add-Content "${{ github.path }}" "$lua_bin_dir"
           Add-Content "${{ github.path }}" "${{ env.LUAROCKS_DIR }}"
 
@@ -89,26 +82,26 @@ jobs:
             --install-prefix "${{ env.LUA_DIR }}" `
             -S LuaCMake `
             -B "${{ env.LUA_BUILD_DIR }}"
-      
+
       - name: Build Lua ${{ matrix.LUA_VERSION }}
         run: cmake --build "${{ env.LUA_BUILD_DIR }}" --config ${{ matrix.CMAKE_BUILD_TYPE }}
-      
+
       - name: Install Lua ${{ matrix.LUA_VERSION }}
         run: cmake --install "${{ env.LUA_BUILD_DIR }}" --config ${{ matrix.CMAKE_BUILD_TYPE }}
-      
+
       - name: Test Lua ${{ matrix.LUA_VERSION }}
         run: lua -v
-      
+
       - name: Download LuaRocks
         run: Invoke-WebRequest -Uri https://luarocks.org/releases/luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64.zip -OutFile luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64.zip
-      
+
       - name: Extract LuaRocks
         run: Expand-Archive luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64.zip -DestinationPath ([System.IO.Path]::GetDirectoryName("${{ env.LUAROCKS_DIR }}"))
-      
+
       - name: Configure LuaRocks for the built Lua interpreter
         run: |
           luarocks config lua_dir "${{ env.LUA_DIR }}"
-          
+
           if ("${{ matrix.LUA_VERSION }}" -match "^(\d+)\.(\d+)(\.\d+)*$")
           {
             $LUA_SHORT_VERSION=$Matches.1 + "." + $Matches.2
@@ -119,19 +112,19 @@ jobs:
             Write-Host "Invalid Lua version: ${{ matrix.LUA_VERSION }}";
             exit 1;
           }
-      
+
       - name: Update environment variables with variables from LuaRocks
         run: |
           $luarocks_path = luarocks.exe path
           Add-Content "${{ github.env }}" $luarocks_path.Replace("""", "").Replace("'", "").Replace("SET ", "")
-      
+
       - name: Install LuaFileSystem
         run: luarocks install luafilesystem
-      
+
       - name: Prepare a test file for LuaFileSystem
         run: |
           $test_script = @'
-          
+
           -- LuaFileSystem standard example ( see https://lunarmodules.github.io/luafilesystem/examples.html )
 
           local lfs = require"lfs"

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.22.1)
 
 project(LuaCMake
-    VERSION 1.2.0
+    VERSION 1.3.0
     LANGUAGES C
 )
 
@@ -33,12 +33,12 @@ if (DOWNLOAD_LUA_SOURCES)
         set(LUA_MAJOR_VERSION ${CMAKE_MATCH_1})
         set(LUA_MINOR_VERSION ${CMAKE_MATCH_2})
         set(LUA_RELEASE_VERSION ${CMAKE_MATCH_3})
-        
+
         set(LUA_SOURCE_CODE_DIR "${CMAKE_BINARY_DIR}/lua-${LUA_VERSION}")
-        
+
         if (NOT EXISTS ${LUA_SOURCE_CODE_DIR})
             set(lua_archive_dest "${CMAKE_BINARY_DIR}/lua-${LUA_VERSION}.tar.gz")
-            
+
             if (NOT EXISTS ${lua_archive_dest})
                 set(LUA_DOWNLOAD_URL "https://www.lua.org/ftp/lua-${LUA_VERSION}.tar.gz")
 
@@ -63,7 +63,7 @@ if (DOWNLOAD_LUA_SOURCES)
                 message(FATAL_ERROR "Failed to extract ${lua_archive_dest}")
             endif()
         endif()
-        
+
         process_lua_from_source_code_dir(${LUA_SOURCE_CODE_DIR} ${LUA_MAJOR_VERSION} ${LUA_MINOR_VERSION} ${LUA_RELEASE_VERSION})
 
     else()

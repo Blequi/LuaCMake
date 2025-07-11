@@ -3,48 +3,48 @@ run-name: Lua on Windows with Clang-cl
 on:
   push:
     paths-ignore:
-      - "**.md"
-      - doc/**
+      - "**/*.md"
+      - "doc"
   pull_request:
     paths-ignore:
-      - "**.md"
-      - doc/**
+      - "**/*.md"
+      - "doc"
 
 jobs:
   CLANG-CL-Lua-Install:
     runs-on: windows-latest
-    
+
     strategy:
-      
+
       matrix:
         LUA_VERSION:
           - 5.1.5
           - 5.2.4
           - 5.3.6
-          - 5.4.7
-        
-        LUAROCKS_VERSION:
-          - 3.11.1
+          - 5.4.8
 
-        CMAKE_BUILD_TYPE: 
+        LUAROCKS_VERSION:
+          - 3.12.2
+
+        CMAKE_BUILD_TYPE:
           - Release
 
-        CMAKE_GENERATOR: 
+        CMAKE_GENERATOR:
           - Ninja
-    
+
     steps:
-      
+
       - name: Checkout repository to LuaCMake directory
         uses: actions/checkout@v4
         with:
           path: LuaCMake
-      
+
       - name: Install Ninja
         run: choco install ninja
 
       - name: Setup Visual Studio dev prompt
         uses: ilammy/msvc-dev-cmd@v1
-      
+
       - name: Set environment variables
         run: |
           $lua_dir = [System.IO.Path]::Combine("${{ runner.temp }}", "lua", "${{ matrix.LUA_VERSION }}");
@@ -58,11 +58,11 @@ jobs:
           Add-Content "${{ github.env }}" "LFS_TEST_FILE=$lfs_test_file"
 
           Add-Content "${{ github.env }}" "CC=clang-cl"
-      
+
       - name: Place Lua and LuaRocks on system environment PATH variable
         run: |
           $lua_bin_dir = [System.IO.Path]::Combine("${{ env.LUA_DIR }}", "bin");
-      
+
           Add-Content "${{ github.path }}" "$lua_bin_dir"
           Add-Content "${{ github.path }}" "${{ env.LUAROCKS_DIR }}"
 
@@ -76,26 +76,26 @@ jobs:
             --install-prefix "${{ env.LUA_DIR }}" `
             -S LuaCMake `
             -B "${{ env.LUA_BUILD_DIR }}"
-      
+
       - name: Build Lua ${{ matrix.LUA_VERSION }}
         run: cmake --build "${{ env.LUA_BUILD_DIR }}" --config ${{ matrix.CMAKE_BUILD_TYPE }}
-      
+
       - name: Install Lua ${{ matrix.LUA_VERSION }}
         run: cmake --install "${{ env.LUA_BUILD_DIR }}" --config ${{ matrix.CMAKE_BUILD_TYPE }}
-      
+
       - name: Test Lua ${{ matrix.LUA_VERSION }}
         run: lua -v
-      
+
       - name: Download LuaRocks
         run: Invoke-WebRequest -Uri https://luarocks.org/releases/luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64.zip -OutFile luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64.zip
-      
+
       - name: Extract LuaRocks
         run: Expand-Archive luarocks-${{ matrix.LUAROCKS_VERSION }}-windows-64.zip -DestinationPath ([System.IO.Path]::GetDirectoryName("${{ env.LUAROCKS_DIR }}"))
-      
+
       - name: Configure LuaRocks for the built Lua interpreter
         run: |
           luarocks config lua_dir "${{ env.LUA_DIR }}"
-          
+
           if ("${{ matrix.LUA_VERSION }}" -match "^(\d+)\.(\d+)(\.\d+)*$")
           {
             $LUA_SHORT_VERSION=$Matches.1 + "." + $Matches.2
@@ -106,19 +106,19 @@ jobs:
             Write-Host "Invalid Lua version: ${{ matrix.LUA_VERSION }}";
             exit 1;
           }
-      
+
       - name: Update environment variables with variables from LuaRocks
         run: |
           $luarocks_path = luarocks.exe path
           Add-Content "${{ github.env }}" $luarocks_path.Replace("""", "").Replace("'", "").Replace("SET ", "")
-      
+
       - name: Install LuaFileSystem
         run: luarocks install luafilesystem
-      
+
       - name: Prepare a test file for LuaFileSystem
         run: |
           $test_script = @'
-          
+
           -- LuaFileSystem standard example ( see https://lunarmodules.github.io/luafilesystem/examples.html )
 
           local lfs = require"lfs"
