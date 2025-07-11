@@ -1,4 +1,4 @@
-Copyright (c) 2024 Blequi [https://github.com/Blequi/LuaCMake](https://github.com/Blequi/LuaCMake)
+Copyright (c) 2024 - 2025 Blequi [https://github.com/Blequi/LuaCMake](https://github.com/Blequi/LuaCMake)
 
 Permission is hereby granted, free of charge,
 to any person obtaining a copy of this software
